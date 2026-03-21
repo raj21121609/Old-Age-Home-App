@@ -5,6 +5,7 @@ import 'providers/auth_provider.dart';
 import 'providers/caretaker_provider.dart';
 import 'providers/government_provider.dart';
 import 'providers/admin_provider.dart';
+import 'providers/language_provider.dart';
 
 import 'screens/auth/role_selection_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -21,6 +22,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => CaretakerProvider()),
         ChangeNotifierProvider(create: (_) => GovernmentProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
       child: const MyApp(),
     ),

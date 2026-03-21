@@ -1,12 +1,17 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiService {
+  // REPLACE WITH YOUR PC'S IP ADDRESS IF TESTING ON PHYSICAL DEVICE
+  static const String _localIp = '192.168.43.244'; 
+
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:5000/api';
-    if (Platform.isAndroid) return 'http://10.0.2.2:5000/api';
+    // Use the actual Wi-Fi IP address so physical devices can reach the backend
+    if (Platform.isAndroid) return 'http://$_localIp:5000/api';
     return 'http://localhost:5000/api';
   }
 
@@ -26,6 +31,10 @@ class ApiService {
 
   // HELPER: Handle Exceptions safely
   static Map<String, dynamic> _handleError(dynamic e) {
+    print('API Error: $e'); // Print error to console for debugging
+    if (e is TimeoutException) {
+      return {'error': 'Connection timed out. Server might be down or unreachable on this network.'};
+    }
     return {'error': 'Network connection failed. Check server.'};
   }
 
@@ -33,11 +42,14 @@ class ApiService {
 
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
+      print('Sending login request to: $baseUrl/auth/login');
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
-      );
+      ).timeout(const Duration(seconds: 10)); // Fail-fast timeout
+      
+      print('Response Status: ${response.statusCode}');
       return _handleResponse(response);
     } catch (e) {
       return _handleError(e);
@@ -46,11 +58,14 @@ class ApiService {
 
   static Future<Map<String, dynamic>> register(String name, String email, String password, String role) async {
     try {
+      print('Sending register request to: $baseUrl/auth/register');
       final response = await http.post(
         Uri.parse('$baseUrl/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'name': name, 'email': email, 'password': password, 'role': role}),
-      );
+      ).timeout(const Duration(seconds: 10)); // Fail-fast timeout
+      
+      print('Response Status: ${response.statusCode}');
       return _handleResponse(response);
     } catch (e) {
       return _handleError(e);
