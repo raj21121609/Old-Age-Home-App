@@ -205,6 +205,26 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
   }
 
   Widget _buildGreenHeader(GovernmentProvider provider) {
+    int totalHomes = provider.homes.length;
+    int totalResidents = 0;
+    int totalHighRisk = 0;
+
+    for (var h in provider.homes) {
+      bool pending = h['status'] == 'pending';
+      int residents = (h['residents_count'] as num?)?.toInt() ?? 32;
+      int alerts = (h['alerts_count'] as num?)?.toInt() ?? 0;
+      
+      if (!pending && alerts == 0) {
+         residents = 45; // Logic matched from cards fallback
+      }
+      
+      totalResidents += residents;
+      
+      if (!pending && alerts > 0) {
+        totalHighRisk++;
+      }
+    }
+
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -248,9 +268,9 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStatBox('${provider.homes.length}', 'Total Homes'),
-              _buildStatBox('${provider.totalResidents}', 'Residents'),
-              _buildStatBox('${provider.highRiskCount}', 'High Risk'),
+              _buildStatBox(totalHomes.toString(), 'Total Homes'),
+              _buildStatBox(totalResidents.toString(), 'Residents'),
+              _buildStatBox(totalHighRisk.toString(), 'High Risk'),
             ],
           )
         ],
