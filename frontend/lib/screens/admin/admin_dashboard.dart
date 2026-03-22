@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/admin_provider.dart';
 import 'admin_resident_profile_screen.dart';
 import 'admin_alerts_screen.dart';
+import 'admin_profile_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -320,7 +321,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ? _buildDashboardContent()
                   : _selectedIndex == 1
                       ? AdminAlertsScreen(onBack: () => setState(() => _selectedIndex = 0))
-                      : Center(child: Text('Profile', style: const TextStyle(fontSize: 18, color: Colors.grey))),
+                      : AdminProfileScreen(onBack: () => setState(() => _selectedIndex = 0)),
             )
           ],
         ),
