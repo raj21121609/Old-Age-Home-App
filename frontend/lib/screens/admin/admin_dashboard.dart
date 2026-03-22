@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/admin_provider.dart';
+import 'admin_resident_profile_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -10,6 +11,38 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
+  int _selectedIndex = 0;
+
+  final List<Map<String, dynamic>> _residents = [
+    {
+      'name': 'Ramesh Kumar',
+      'age': 72,
+      'gender': 'Male',
+      'room': 'Room 101',
+      'medical': 'Diabetes, Hypertension',
+      'emergency': '+91 9876543210',
+      'admitted': '15 Jan 2023',
+    },
+    {
+      'name': 'Lakshmi Devi',
+      'age': 68,
+      'gender': 'Female',
+      'room': 'Room 102',
+      'medical': 'Arthritis',
+      'emergency': '+91 9876543211',
+      'admitted': '20 Feb 2023',
+    },
+    {
+      'name': 'Suresh Patel',
+      'age': 75,
+      'gender': 'Male',
+      'room': 'Room 103',
+      'medical': 'Heart Disease',
+      'emergency': '+91 9876543212',
+      'admitted': '10 Mar 2023',
+    }
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -18,59 +51,250 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
   }
 
+  void _confirmDelete(int index) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Are you sure?', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('This will permanently remove the resident from the system. This action cannot be undone.', style: TextStyle(color: Colors.black87)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        actionsPadding: const EdgeInsets.only(right: 16, bottom: 16),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.black87,
+              side: BorderSide(color: Colors.grey.shade400),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _residents.removeAt(index);
+              });
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE50000),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+          )
+        ],
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AdminProvider>();
+    int total = _residents.length;
+    int male = _residents.where((r) => r['gender'] == 'Male').length;
+    int female = _residents.where((r) => r['gender'] == 'Female').length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F9FF),
       body: SafeArea(
         child: Column(
           children: [
-            _buildPurpleHeader(provider),
+            if (_selectedIndex == 0) _buildPurpleHeader(total, male, female),
             Expanded(
-              child: provider.isLoading && provider.users.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : provider.error.isNotEmpty 
-                  ? Center(child: Text('Error: ${provider.error}', style: const TextStyle(color: Colors.red)))
-                  : _buildContent(provider),
+              child: _selectedIndex == 0 
+                  ? _buildDashboardContent()
+                  : Center(child: Text(['Home', 'Alerts', 'Profile'][_selectedIndex], style: const TextStyle(fontSize: 18, color: Colors.grey))),
             )
           ],
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        selectedItemColor: const Color(0xFF8B21C6),
+        unselectedItemColor: Colors.grey.shade500,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.notifications_outlined), activeIcon: Icon(Icons.notifications), label: 'Alerts'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
     );
   }
 
-  Widget _buildContent(AdminProvider provider) {
+  Widget _buildDashboardContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Platform Users', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.search, color: Colors.grey.shade500, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search by name or room number...',
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
-          if (provider.users.isEmpty)
-             const Text('No users found.'),
-          ...provider.users.map((u) {
-             return _buildUserCard(
-               '${u['name']} (${u['role']})',
-               u['email'],
-               u['status'] ?? 'Active'
-             );
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9333EA), // Purple button
+              minimumSize: const Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
+            onPressed: () {},
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add, color: Colors.white, size: 18),
+                SizedBox(width: 8),
+                Text('Add New Resident', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('All Residents', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(16)),
+                child: Text('${_residents.length} Residents', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade800)),
+              )
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_residents.isEmpty) 
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: Text("No residents found. Add a resident to view them here.", style: TextStyle(color: Colors.grey.shade500))),
+            ),
+          ..._residents.asMap().entries.map((entry) {
+            int index = entry.key;
+            Map<String, dynamic> r = entry.value;
+            return _buildResidentCard(r, index);
           })
         ],
       ),
     );
   }
 
-  Widget _buildPurpleHeader(AdminProvider provider) {
+  Widget _buildResidentCard(Map<String, dynamic> r, int index) {
+    String initial = r['name'].toString().substring(0, 1);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2))
+        ]
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: const Color(0xFF9333EA),
+                child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(r['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1E293B))),
+                    const SizedBox(height: 2),
+                    Text('${r['age']} years  •  ${r['gender']}  •  ${r['room']}', style: TextStyle(color: Colors.blueGrey.shade600, fontSize: 13)),
+                  ],
+                ),
+              )
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildInfoRow('Medical:', r['medical']),
+          const SizedBox(height: 8),
+          _buildInfoRow('Emergency:', r['emergency']),
+          const SizedBox(height: 8),
+          _buildInfoRow('Admitted:', r['admitted']),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => AdminResidentProfileScreen(resident: r)));
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.grey.shade300),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('View Profile', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600, fontSize: 13)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton(
+                onPressed: () => _confirmDelete(index),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.red.shade100),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  backgroundColor: Colors.red.shade50,
+                ),
+                child: Icon(Icons.delete_outline, color: Colors.red.shade600, size: 20),
+              )
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: 80, child: Text(label, style: TextStyle(color: Colors.blueGrey.shade400, fontSize: 13))),
+        Expanded(child: Text(value, style: TextStyle(color: Colors.blueGrey.shade700, fontSize: 13))),
+      ],
+    );
+  }
+
+  Widget _buildPurpleHeader(int total, int male, int female) {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFF9333EA),
+        color: Color(0xFF8B21C6), // Deep purple
         borderRadius: BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(top: 24, left: 20, right: 20, bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -82,7 +306,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 children: [
                   Text('Admin Dashboard', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
                   SizedBox(height: 4),
-                  Text('System Overview', style: TextStyle(fontSize: 14, color: Colors.white70)),
+                  Text('Manage Residents & Facilities', style: TextStyle(fontSize: 14, color: Colors.white70)),
                 ],
               ),
               Stack(
@@ -91,7 +315,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   Positioned(
                     right: 0, top: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(3),
+                      padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
                       child: const Text('2', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
@@ -102,11 +326,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
           const SizedBox(height: 24),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStatBox('${provider.users.length}', 'Total Users'),
-              _buildStatBox('${provider.caretakerCount}', 'Caretakers'),
-              _buildStatBox('0', 'Active Homes'),
+              Expanded(child: _buildStatBox(total.toString(), 'Total')),
+              const SizedBox(width: 12),
+              Expanded(child: _buildStatBox(male.toString(), 'Male')),
+              const SizedBox(width: 12),
+              Expanded(child: _buildStatBox(female.toString(), 'Female')),
             ],
           )
         ],
@@ -116,39 +341,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildStatBox(String val, String label) {
     return Container(
-      width: 100,
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
-          Text(val, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(val, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.white)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUserCard(String name, String email, String status) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.shade200)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(email, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                const SizedBox(height: 4),
-                Text('Status: $status', style: TextStyle(color: status == 'approved' ? Colors.green : Colors.orange, fontSize: 12, fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-          IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () {})
+          Text(label, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500)),
         ],
       ),
     );
