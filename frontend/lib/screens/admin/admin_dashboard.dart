@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/admin_provider.dart';
 import 'admin_resident_profile_screen.dart';
+import 'admin_alerts_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -12,6 +13,7 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
+  final TextEditingController _searchController = TextEditingController();
 
   final List<Map<String, dynamic>> _residents = [
     {
@@ -46,12 +48,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(() {
+      setState(() {});
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AdminProvider>().fetchSystemOverview();
     });
   }
 
-  void _confirmDelete(int index) {
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _confirmDelete(int index, Map<String, dynamic> r) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -72,7 +83,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ElevatedButton(
             onPressed: () {
               setState(() {
-                _residents.removeAt(index);
+                _residents.remove(r);
               });
               Navigator.pop(ctx);
             },
@@ -85,6 +96,210 @@ class _AdminDashboardState extends State<AdminDashboard> {
           )
         ],
       )
+    );
+  }
+
+  void _showAddResidentModal(BuildContext context) {
+    final TextEditingController nameCtl = TextEditingController();
+    final TextEditingController ageCtl = TextEditingController();
+    final TextEditingController roomCtl = TextEditingController();
+    String gender = 'Male';
+    final TextEditingController medicalCtl = TextEditingController();
+    final TextEditingController emergencyCtl = TextEditingController();
+    final TextEditingController dateCtl = TextEditingController();
+    
+    String errorMsg = '';
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Add New Resident', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(ctx),
+                          child: const Icon(Icons.close, size: 20, color: Colors.grey),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Enter the details of the new resident below.', style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                    const SizedBox(height: 24),
+                    
+                    _buildModalLabel('Full Name'),
+                    _buildModalInput(nameCtl, 'Enter full name', hasBorder: true),
+                    const SizedBox(height: 16),
+                    
+                    Row(
+                      children: [
+                        Expanded(child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildModalLabel('Age'),
+                            _buildModalInput(ageCtl, 'Age', hasBorder: false),
+                          ],
+                        )),
+                        const SizedBox(width: 16),
+                        Expanded(child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildModalLabel('Room Number'),
+                            _buildModalInput(roomCtl, 'Room #', hasBorder: false),
+                          ],
+                        )),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildModalLabel('Gender'),
+                    Container(
+                      height: 48,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: gender,
+                          isExpanded: true,
+                          items: ['Male', 'Female', 'Other'].map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 14)))).toList(),
+                          onChanged: (val) {
+                            if (val != null) setModalState(() => gender = val);
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildModalLabel('Medical Conditions'),
+                    _buildModalInput(medicalCtl, 'e.g., Diabetes, Hypertension', hasBorder: false),
+                    const SizedBox(height: 16),
+
+                    _buildModalLabel('Emergency Contact'),
+                    _buildModalInput(emergencyCtl, '+91 XXXXXXXXXX', hasBorder: false),
+                    const SizedBox(height: 16),
+
+                    _buildModalLabel('Admission Date'),
+                    Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: dateCtl,
+                        decoration: InputDecoration(
+                          hintText: '22-03-2026',
+                          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                          suffixIcon: Icon(Icons.calendar_today_outlined, size: 18, color: Colors.grey.shade400),
+                        ),
+                      ),
+                    ),
+
+                    if (errorMsg.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text(errorMsg, style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w600)),
+                    ],
+
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: const Text('Cancel', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (nameCtl.text.isEmpty || ageCtl.text.isEmpty || roomCtl.text.isEmpty || medicalCtl.text.isEmpty || emergencyCtl.text.isEmpty || dateCtl.text.isEmpty) {
+                                setModalState(() {
+                                  errorMsg = 'All fields are required';
+                                });
+                                return;
+                              }
+                              
+                              setState(() {
+                                _residents.insert(0, {
+                                  'name': nameCtl.text,
+                                  'age': int.tryParse(ageCtl.text) ?? 60,
+                                  'gender': gender,
+                                  'room': roomCtl.text.contains('Room') ? roomCtl.text : 'Room ${roomCtl.text}',
+                                  'medical': medicalCtl.text,
+                                  'emergency': emergencyCtl.text,
+                                  'admitted': dateCtl.text,
+                                });
+                              });
+                              Navigator.pop(ctx);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFD8B4FE), // Light purple from reference
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: const Text('Add Resident', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            );
+          }
+        );
+      }
+    );
+  }
+
+  Widget _buildModalLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
+    );
+  }
+
+  Widget _buildModalInput(TextEditingController controller, String hint, {required bool hasBorder}) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: hasBorder ? Colors.white : Colors.grey.shade50,
+        border: hasBorder ? Border.all(color: Colors.grey.shade400) : null,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        ),
+      ),
     );
   }
 
@@ -103,7 +318,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
             Expanded(
               child: _selectedIndex == 0 
                   ? _buildDashboardContent()
-                  : Center(child: Text(['Home', 'Alerts', 'Profile'][_selectedIndex], style: const TextStyle(fontSize: 18, color: Colors.grey))),
+                  : _selectedIndex == 1
+                      ? AdminAlertsScreen(onBack: () => setState(() => _selectedIndex = 0))
+                      : Center(child: Text('Profile', style: const TextStyle(fontSize: 18, color: Colors.grey))),
             )
           ],
         ),
@@ -144,6 +361,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
+                    controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Search by name or room number...',
                       border: InputBorder.none,
@@ -162,7 +380,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               elevation: 0,
             ),
-            onPressed: () {},
+            onPressed: () => _showAddResidentModal(context),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -185,16 +403,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ],
           ),
           const SizedBox(height: 16),
-          if (_residents.isEmpty) 
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 32),
-              child: Center(child: Text("No residents found. Add a resident to view them here.", style: TextStyle(color: Colors.grey.shade500))),
-            ),
-          ..._residents.asMap().entries.map((entry) {
-            int index = entry.key;
-            Map<String, dynamic> r = entry.value;
-            return _buildResidentCard(r, index);
-          })
+          Builder(
+            builder: (context) {
+              String query = _searchController.text.toLowerCase();
+              List<Map<String, dynamic>> filteredList = _residents.where((r) {
+                return r['name'].toString().toLowerCase().contains(query) ||
+                       r['room'].toString().toLowerCase().contains(query);
+              }).toList();
+
+              if (filteredList.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Center(child: Text("No residents found.", style: TextStyle(color: Colors.grey.shade500))),
+                );
+              }
+
+              return Column(
+                children: filteredList.asMap().entries.map((entry) {
+                  return _buildResidentCard(entry.value, entry.key);
+                }).toList(),
+              );
+            }
+          )
         ],
       ),
     );
@@ -261,7 +491,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
               const SizedBox(width: 12),
               OutlinedButton(
-                onPressed: () => _confirmDelete(index),
+                onPressed: () => _confirmDelete(index, r),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: Colors.red.shade100),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -309,18 +539,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   Text('Manage Residents & Facilities', style: TextStyle(fontSize: 14, color: Colors.white70)),
                 ],
               ),
-              Stack(
-                children: [
-                  const Icon(Icons.notifications_none, color: Colors.white, size: 28),
-                  Positioned(
-                    right: 0, top: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                      child: const Text('2', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                  )
-                ],
+              GestureDetector(
+                onTap: () => setState(() => _selectedIndex = 1),
+                child: Stack(
+                  children: [
+                    const Icon(Icons.notifications_none, color: Colors.white, size: 28),
+                    Positioned(
+                      right: 0, top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                        child: const Text('2', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    )
+                  ],
+                ),
               )
             ],
           ),
