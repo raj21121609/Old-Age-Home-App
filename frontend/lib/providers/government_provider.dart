@@ -39,4 +39,28 @@ class GovernmentProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
+  Future<void> addHome(Map<String, dynamic> homeData) async {
+    _isLoading = true;
+    notifyListeners();
+
+    // Simulate API call delay
+    await Future.delayed(const Duration(seconds: 1));
+    
+    // Add locally to the state
+    _homes.add({
+      'name': homeData['name'],
+      'location': homeData['location'],
+      'city': homeData['district'], // Map district to city or keeping it
+      'status': 'pending',
+      'email': '',
+      'role': 'caretaker',
+      'residents_count': int.tryParse(homeData['residents'] ?? '0') ?? 0,
+      'pending_count': 0,
+      'alerts_count': 0,
+    });
+    
+    _isLoading = false;
+    notifyListeners();
+  }
 }

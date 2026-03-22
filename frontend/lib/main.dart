@@ -10,9 +10,9 @@ import 'providers/language_provider.dart';
 import 'screens/auth/role_selection_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
-import 'screens/dashboards/caretaker_dashboard.dart';
-import 'screens/dashboards/government_dashboard.dart';
-import 'screens/dashboards/admin_dashboard.dart';
+import 'screens/caretaker/caretaker_dashboard.dart';
+import 'screens/government/government_dashboard.dart';
+import 'screens/admin/admin_dashboard.dart';
 
 void main() {
   runApp(
