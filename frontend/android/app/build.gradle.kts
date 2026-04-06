@@ -8,7 +8,6 @@ plugins {
 android {
     namespace = "com.example.flutter_oldageapp"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

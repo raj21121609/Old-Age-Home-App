@@ -43,11 +43,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> register(String name, String email, String password, String role) async {
+  Future<bool> register(String name, String email, String password, String role, {int? oldAgeHomeId}) async {
     _setLoading(true);
     _setError('');
     try {
-      final response = await ApiService.register(name, email, password, role);
+      final response = await ApiService.register(name, email, password, role, oldAgeHomeId: oldAgeHomeId);
       if (response.containsKey('error')) {
         _setError(response['error']);
         _setLoading(false);

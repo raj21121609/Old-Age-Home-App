@@ -5,6 +5,7 @@ const authRoute = require('./authRoute');
 const caretakerRoute = require('./caretakerRoute');
 const governmentRoute = require('./governmentRoute');
 const adminRoute = require('./adminRoute');
+const homeRoute = require('./homeRoute'); // [NEW]
 
 // Root route
 router.get('/', indexController.getRoot);
@@ -14,5 +15,6 @@ router.use('/api/auth', authRoute);
 router.use('/api/caretaker', caretakerRoute);
 router.use('/api/government', governmentRoute);
 router.use('/api/admin', adminRoute);
+router.use('/api/homes', homeRoute); // [NEW]
 
 module.exports = router;

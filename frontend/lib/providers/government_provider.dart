@@ -20,15 +20,12 @@ class GovernmentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Fetching all data provides the necessary foundation for advanced analytics requested
       final response = await ApiService.getAllData();
       if (response.containsKey('error')) {
         _error = response['error'];
       } else {
-        final users = response['users'] ?? [];
         final elderly = response['elderly'] ?? [];
-        
-        _homes = users.where((u) => u['role'] == 'caretaker').toList();
+        _homes = response['homes'] ?? [];
         _totalResidents = elderly.length;
         _highRiskCount = elderly.where((e) => e['health_status']?.toLowerCase() == 'critical').length;
       }
@@ -44,21 +41,23 @@ class GovernmentProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // Simulate API call delay
-    await Future.delayed(const Duration(seconds: 1));
-    
-    // Add locally to the state
-    _homes.add({
-      'name': homeData['name'],
-      'location': homeData['location'],
-      'city': homeData['district'], // Map district to city or keeping it
-      'status': 'pending',
-      'email': '',
-      'role': 'caretaker',
-      'residents_count': int.tryParse(homeData['residents'] ?? '0') ?? 0,
-      'pending_count': 0,
-      'alerts_count': 0,
-    });
+    try {
+      final response = await ApiService.addHome({
+        'name': homeData['name'],
+        'location': homeData['location'],
+        'district': homeData['district'],
+        'residents': int.tryParse(homeData['residents'] ?? '0') ?? 0,
+      });
+
+      if (response.containsKey('error')) {
+        _error = response['error'];
+      } else {
+        // Refresh the list
+        await fetchDashboardAnalytics();
+      }
+    } catch (e) {
+      _error = 'Failed to add home';
+    }
     
     _isLoading = false;
     notifyListeners();

@@ -60,7 +60,7 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
                       )
                     : Column(
                         children: [
-                          _buildTopHeader(name, langProvider),
+                          _buildTopHeader(name, langProvider, user),
                           if (provider.error == 'EMERGENCY ALERT BROADCASTED SECURELY') 
                              Container(width: double.infinity, color: Colors.red, padding: const EdgeInsets.all(12), child: Text(provider.error, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
                           Expanded(
@@ -141,7 +141,7 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
     );
   }
 
-  Widget _buildTopHeader(String name, LanguageProvider lang) {
+  Widget _buildTopHeader(String name, LanguageProvider lang, Map<String, dynamic>? user) {
     return SizedBox(
       height: 250,
       child: Stack(
@@ -173,7 +173,7 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(lang.t('Sunshine Old Age Home', 'सनशाइन ओल्ड एज होम'), style: const TextStyle(fontSize: 14, color: Colors.white)),
+                Text(lang.t(user?['old_age_home_name'] ?? 'Old Age Home', user?['old_age_home_name'] ?? 'ओल्ड एज होम'), style: const TextStyle(fontSize: 14, color: Colors.white)),
                 const Spacer(),
                 Container(
                   width: double.infinity,

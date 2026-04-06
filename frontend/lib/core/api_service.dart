@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiService {
   // REPLACE WITH YOUR PC'S IP ADDRESS IF TESTING ON PHYSICAL DEVICE
-  static const String _localIp = '192.168.43.244'; 
+  static const String _localIp = '192.168.1.7'; 
 
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:5000/api';
@@ -56,13 +56,19 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> register(String name, String email, String password, String role) async {
+  static Future<Map<String, dynamic>> register(String name, String email, String password, String role, {int? oldAgeHomeId}) async {
     try {
       print('Sending register request to: $baseUrl/auth/register');
       final response = await http.post(
         Uri.parse('$baseUrl/auth/register'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'name': name, 'email': email, 'password': password, 'role': role}),
+        body: jsonEncode({
+          'name': name, 
+          'email': email, 
+          'password': password, 
+          'role': role,
+          'old_age_home_id': oldAgeHomeId
+        }),
       ).timeout(const Duration(seconds: 10)); // Fail-fast timeout
       
       print('Response Status: ${response.statusCode}');
@@ -135,6 +141,32 @@ class ApiService {
         Uri.parse('$baseUrl/government/homes/$homeId/status'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'status': status}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // --- HOMES --- //
+
+  static Future<List<dynamic>> getAllHomes() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/homes'));
+      final decoded = jsonDecode(response.body);
+      return decoded is List ? decoded : [];
+    } catch (e) {
+      print('Error fetching homes: $e');
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> addHome(Map<String, dynamic> data) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/homes'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
       );
       return _handleResponse(response);
     } catch (e) {

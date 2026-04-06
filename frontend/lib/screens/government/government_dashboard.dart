@@ -371,16 +371,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
                 'isOk': isOk, 'isWarning': isWarning, 'isAlert': isAlert
               };
             }).where((data) {
-              String riskLevel = 'Low Risk';
-              if (data['isAlert'] == true) riskLevel = 'High Risk';
-              else if (data['isWarning'] == true) riskLevel = 'Medium Risk';
-              
-              String addressStr = data['address'].toString();
-              String cityStr = (data['h'] as Map)['city']?.toString() ?? '';
-              
-              bool matchDistrict = _selectedDistrict == 'All Districts' || addressStr.contains(_selectedDistrict) || cityStr == _selectedDistrict;
-              bool matchLevel = _selectedLevel == 'All Levels' || riskLevel == _selectedLevel;
-              return matchDistrict && matchLevel;
+              return true; // Temporary: Show all homes to ensure visibility
             }).toList();
 
             if (mappedList.isEmpty && provider.homes.isNotEmpty) {

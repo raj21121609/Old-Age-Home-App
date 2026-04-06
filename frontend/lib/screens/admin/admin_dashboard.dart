@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/admin_provider.dart';
 import 'admin_resident_profile_screen.dart';
 import 'admin_alerts_screen.dart';
@@ -532,12 +533,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Admin Dashboard', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                  SizedBox(height: 4),
-                  Text('Manage Residents & Facilities', style: TextStyle(fontSize: 14, color: Colors.white70)),
+                  const Text('Admin Dashboard', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                  const SizedBox(height: 4),
+                  Text(context.watch<AuthProvider>().user?['old_age_home_name'] ?? 'Manage Residents & Facilities', 
+                       style: const TextStyle(fontSize: 14, color: Colors.white70)),
                 ],
               ),
               GestureDetector(

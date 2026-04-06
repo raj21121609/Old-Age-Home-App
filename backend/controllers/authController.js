@@ -1,44 +1,32 @@
 const db = require('../database/db');
 
 exports.register = (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, old_age_home_id } = req.body;
 
   // Basic validation
   if (!name || !email || !password || !role) {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
-  // Check if role is valid
-  const validRoles = ['admin', 'government', 'caretaker'];
-  if (!validRoles.includes(role)) {
-    return res.status(400).json({ error: 'Invalid role' });
-  }
-
-  // Ensure email doesn't already exist
-  db.get('SELECT email FROM users WHERE email = ?', [email], (err, row) => {
+  // Insert user
+  const query = 'INSERT INTO users (name, email, password, role, old_age_home_id) VALUES (?, ?, ?, ?, ?)';
+  db.run(query, [name, email, password, role, old_age_home_id || null], function(err) {
     if (err) {
-      return res.status(500).json({ error: 'Database error while checking email' });
-    }
-    if (row) {
-      return res.status(409).json({ error: 'Email already exists' });
-    }
-
-    // Insert user
-    const query = 'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)';
-    db.run(query, [name, email, password, role], function(err) {
-      if (err) {
-        return res.status(500).json({ error: 'Failed to register user' });
+      if (err.message.includes('UNIQUE constraint failed')) {
+        return res.status(409).json({ error: 'Email already exists' });
       }
-      
-      return res.status(201).json({
-        message: 'Registration successful',
-        user: {
-          id: this.lastID,
-          name,
-          email,
-          role
-        }
-      });
+      return res.status(500).json({ error: 'Failed to register user' });
+    }
+    
+    return res.status(201).json({
+      message: 'Registration successful',
+      user: {
+        id: this.lastID,
+        name,
+        email,
+        role,
+        old_age_home_id
+      }
     });
   });
 };
@@ -50,7 +38,12 @@ exports.login = (req, res) => {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
-  const query = 'SELECT id, name, email, role FROM users WHERE email = ? AND password = ?';
+  const query = `
+    SELECT u.id, u.name, u.email, u.role, u.old_age_home_id, h.name AS old_age_home_name
+    FROM users u
+    LEFT JOIN old_age_homes h ON u.old_age_home_id = h.id
+    WHERE u.email = ? AND u.password = ?
+  `;
   db.get(query, [email, password], (err, user) => {
     if (err) {
       return res.status(500).json({ error: 'Database error during login' });
@@ -66,7 +59,9 @@ exports.login = (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        old_age_home_id: user.old_age_home_id,
+        old_age_home_name: user.old_age_home_name
       }
     });
   });

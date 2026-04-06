@@ -37,7 +37,11 @@ exports.viewAllData = (req, res) => {
       db.all('SELECT * FROM reports', [], (err, reports) => {
         if (err) return res.status(500).json({ error: 'Error fetching reports' });
         data.reports = reports;
-        res.json(data);
+        db.all('SELECT * FROM old_age_homes', [], (err, homes) => {
+          if (err) return res.status(500).json({ error: 'Error fetching homes' });
+          data.homes = homes;
+          res.json(data);
+        });
       });
     });
   });
