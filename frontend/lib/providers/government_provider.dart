@@ -8,9 +8,14 @@ class GovernmentProvider extends ChangeNotifier {
   int _totalResidents = 0;
   int _highRiskCount = 0;
 
+  List<dynamic> _reports = []; // Home specific reports
+  List<dynamic> _systemAlerts = []; // System wide alerts
+
   bool get isLoading => _isLoading;
   String get error => _error;
   List<dynamic> get homes => _homes;
+  List<dynamic> get reports => _reports;
+  List<dynamic> get systemAlerts => _systemAlerts;
   int get totalResidents => _totalResidents;
   int get highRiskCount => _highRiskCount;
 
@@ -28,6 +33,9 @@ class GovernmentProvider extends ChangeNotifier {
         _homes = response['homes'] ?? [];
         _totalResidents = elderly.length;
         _highRiskCount = elderly.where((e) => e['health_status']?.toLowerCase() == 'critical').length;
+        
+        final allDaily = response['daily_reports'] ?? [];
+        _systemAlerts = allDaily.where((r) => r['issues'] != null && r['issues'].toString().trim().isNotEmpty).toList();
       }
     } catch (e) {
       _error = 'Failed to load analytics';
@@ -59,6 +67,27 @@ class GovernmentProvider extends ChangeNotifier {
       _error = 'Failed to add home';
     }
     
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> fetchHomeReports(int homeId) async {
+    _isLoading = true;
+    _error = '';
+    _reports = [];
+    notifyListeners();
+
+    try {
+      final response = await ApiService.getDailyReportsByHome(homeId);
+      if (response.containsKey('error')) {
+        _error = response['error'];
+      } else {
+        _reports = response['reports'] ?? [];
+      }
+    } catch (e) {
+      _error = 'Failed to load reports';
+    }
+
     _isLoading = false;
     notifyListeners();
   }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/admin_provider.dart';
 
 class AdminAlertsScreen extends StatefulWidget {
   final VoidCallback? onBack; // Optional back navigation for embedding
@@ -12,60 +14,15 @@ class AdminAlertsScreen extends StatefulWidget {
 class _AdminAlertsScreenState extends State<AdminAlertsScreen> {
   String _selectedFilter = 'All';
 
-  final List<String> _filters = ['All', 'Alerts', 'Warnings', 'Updates'];
-
-  final List<Map<String, dynamic>> _alerts = [
-    {
-      'type': 'Alerts',
-      'title': 'Emergency Alert',
-      'desc': 'Health emergency reported for Ramesh Kumar at Sunshine Old Age Home',
-      'meta': 'Sunshine Old Age Home • Ramesh Kumar',
-      'time': '10 mins ago',
-      'isNew': true,
-      'color': Colors.red,
-      'bg': Colors.red.shade50,
-      'icon': Icons.warning_amber_rounded
-    },
-    {
-      'type': 'Warnings',
-      'title': 'Missing Reports',
-      'desc': '5 daily reports not submitted at Seva Sadan',
-      'meta': 'Seva Sadan',
-      'time': '2 hours ago',
-      'isNew': true,
-      'color': Colors.orangeAccent.shade700,
-      'bg': Colors.orange.shade50,
-      'icon': Icons.schedule
-    },
-    {
-      'type': 'Updates',
-      'title': 'Inspection Scheduled',
-      'desc': 'Site visit scheduled for Golden Years Care Center on Jan 10',
-      'meta': 'Golden Years Care Center',
-      'time': '1 day ago',
-      'isNew': false,
-      'color': Colors.blue.shade600,
-      'bg': Colors.blue.shade50,
-      'icon': Icons.shield_outlined
-    },
-    {
-      'type': 'Updates',
-      'title': 'Report Verified',
-      'desc': 'All reports verified for Aashray Care Home',
-      'meta': 'Aashray Care Home',
-      'time': '2 days ago',
-      'isNew': false,
-      'color': Colors.green.shade600,
-      'bg': Colors.green.shade50,
-      'icon': Icons.check_circle_outline
-    }
-  ];
+  final List<String> _filters = ['All', 'Alerts'];
 
   @override
   Widget build(BuildContext context) {
-    List<Map<String, dynamic>> filteredAlerts = _selectedFilter == 'All'
-        ? _alerts
-        : _alerts.where((a) => a['type'] == _selectedFilter).toList();
+    final systemAlerts = context.watch<AdminProvider>().systemAlerts;
+    
+    List<dynamic> filteredAlerts = _selectedFilter == 'All'
+        ? systemAlerts
+        : systemAlerts; // All are 'Alerts' mapped from issues.
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F9FF),
@@ -81,7 +38,17 @@ class _AdminAlertsScreenState extends State<AdminAlertsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       itemCount: filteredAlerts.length,
                       itemBuilder: (context, index) {
-                        return _buildAlertCard(filteredAlerts[index]);
+                        final a = filteredAlerts[index];
+                        return _buildAlertCard({
+                          'title': 'Home Alert - ${a['home_name']}',
+                          'desc': '${a['issues']}',
+                          'meta': '${a['home_name']} • ${a['elderly_name']}',
+                          'time': a['date'] ?? 'Recent',
+                          'isNew': true,
+                          'color': Colors.red,
+                          'bg': Colors.red.shade50,
+                          'icon': Icons.warning_amber_rounded
+                        });
                       },
                     ),
             )

@@ -40,10 +40,48 @@ exports.viewAllData = (req, res) => {
         db.all('SELECT * FROM old_age_homes', [], (err, homes) => {
           if (err) return res.status(500).json({ error: 'Error fetching homes' });
           data.homes = homes;
-          res.json(data);
+          db.all('SELECT d.*, e.name AS elderly_name, h.name AS home_name, h.id AS home_id FROM daily_reports d JOIN elderly e ON d.elderly_id = e.id JOIN old_age_homes h ON e.old_age_home_id = h.id ORDER BY d.id DESC', [], (err, dailyReports) => {
+            if (err) return res.status(500).json({ error: 'Error fetching daily reports' });
+            data.daily_reports = dailyReports;
+            res.json(data);
+          });
         });
       });
     });
+  });
+};
+
+exports.addResident = (req, res) => {
+  const { name, age, gender, room, medical_conditions, emergency_contact, admission_date, old_age_home_id } = req.body;
+  
+  if (!name || !age || !old_age_home_id) {
+    return res.status(400).json({ error: 'Name, age, and old_age_home_id are required' });
+  }
+
+  const query = `
+    INSERT INTO elderly (name, age, gender, room, medical_conditions, emergency_contact, admission_date, old_age_home_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+  
+  db.run(query, [name, age, gender, room, medical_conditions, emergency_contact, admission_date, old_age_home_id], function(err) {
+    if (err) {
+      console.error('Error adding resident:', err.message);
+      return res.status(500).json({ error: 'Failed to add resident' });
+    }
+    res.status(201).json({ message: 'Resident added successfully', id: this.lastID });
+  });
+};
+
+exports.getResidentsByHome = (req, res) => {
+  const { home_id } = req.params;
+  
+  const query = 'SELECT * FROM elderly WHERE old_age_home_id = ?';
+  db.all(query, [home_id], (err, rows) => {
+    if (err) {
+      console.error('Error fetching residents:', err.message);
+      return res.status(500).json({ error: 'Failed to fetch residents' });
+    }
+    res.json({ residents: rows });
   });
 };
 

@@ -17,36 +17,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
   final TextEditingController _searchController = TextEditingController();
 
-  final List<Map<String, dynamic>> _residents = [
-    {
-      'name': 'Ramesh Kumar',
-      'age': 72,
-      'gender': 'Male',
-      'room': 'Room 101',
-      'medical': 'Diabetes, Hypertension',
-      'emergency': '+91 9876543210',
-      'admitted': '15 Jan 2023',
-    },
-    {
-      'name': 'Lakshmi Devi',
-      'age': 68,
-      'gender': 'Female',
-      'room': 'Room 102',
-      'medical': 'Arthritis',
-      'emergency': '+91 9876543211',
-      'admitted': '20 Feb 2023',
-    },
-    {
-      'name': 'Suresh Patel',
-      'age': 75,
-      'gender': 'Male',
-      'room': 'Room 103',
-      'medical': 'Heart Disease',
-      'emergency': '+91 9876543212',
-      'admitted': '10 Mar 2023',
-    }
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -54,7 +24,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
       setState(() {});
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AdminProvider>().fetchSystemOverview();
+      final auth = context.read<AuthProvider>();
+      final admin = context.read<AdminProvider>();
+      admin.fetchSystemOverview();
+      if (auth.user != null && auth.user!['old_age_home_id'] != null) {
+        admin.fetchResidents(auth.user!['old_age_home_id']);
+      }
     });
   }
 
@@ -64,37 +39,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
     super.dispose();
   }
 
-  void _confirmDelete(int index, Map<String, dynamic> r) {
+  void _confirmDelete(int index, dynamic r) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Are you sure?', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('This will permanently remove the resident from the system. This action cannot be undone.', style: TextStyle(color: Colors.black87)),
+        title: const Text('Coming Soon', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('Resident deletion is currently being implemented.', style: TextStyle(color: Colors.black87)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        actionsPadding: const EdgeInsets.only(right: 16, bottom: 16),
         actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.black87,
-              side: BorderSide(color: Colors.grey.shade400),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
-          ),
           ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _residents.remove(r);
-              });
-              Navigator.pop(ctx);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE50000),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              elevation: 0,
-            ),
-            child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
           )
         ],
       )
@@ -236,7 +191,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
                               if (nameCtl.text.isEmpty || ageCtl.text.isEmpty || roomCtl.text.isEmpty || medicalCtl.text.isEmpty || emergencyCtl.text.isEmpty || dateCtl.text.isEmpty) {
                                 setModalState(() {
                                   errorMsg = 'All fields are required';
@@ -244,18 +199,42 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 return;
                               }
                               
-                              setState(() {
-                                _residents.insert(0, {
-                                  'name': nameCtl.text,
-                                  'age': int.tryParse(ageCtl.text) ?? 60,
-                                  'gender': gender,
-                                  'room': roomCtl.text.contains('Room') ? roomCtl.text : 'Room ${roomCtl.text}',
-                                  'medical': medicalCtl.text,
-                                  'emergency': emergencyCtl.text,
-                                  'admitted': dateCtl.text,
+                              final auth = context.read<AuthProvider>();
+                              final admin = context.read<AdminProvider>();
+                              
+                              if (auth.user == null || auth.user!['old_age_home_id'] == null) {
+                                setModalState(() {
+                                  errorMsg = 'Old Age Home ID not found';
                                 });
+                                return;
+                              }
+
+                              final success = await admin.addResident({
+                                'name': nameCtl.text,
+                                'age': int.tryParse(ageCtl.text) ?? 60,
+                                'gender': gender,
+                                'room': roomCtl.text,
+                                'medical_conditions': medicalCtl.text,
+                                'emergency_contact': emergencyCtl.text,
+                                'admission_date': dateCtl.text,
+                                'old_age_home_id': auth.user!['old_age_home_id'],
                               });
-                              Navigator.pop(ctx);
+
+                              if (success) {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Resident added successfully!'))
+                                );
+                              } else {
+                                setModalState(() {
+                                  errorMsg = admin.error;
+                                });
+                                if (errorMsg.isEmpty) {
+                                  setModalState(() {
+                                    errorMsg = 'Failed to add resident';
+                                  });
+                                }
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFD8B4FE), // Light purple from reference
@@ -307,9 +286,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    int total = _residents.length;
-    int male = _residents.where((r) => r['gender'] == 'Male').length;
-    int female = _residents.where((r) => r['gender'] == 'Female').length;
+    final residents = context.watch<AdminProvider>().residents;
+    
+    int total = residents.length;
+    int male = residents.where((r) => r['gender'] == 'Male').length;
+    int female = residents.where((r) => r['gender'] == 'Female').length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F9FF),
@@ -319,7 +300,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             if (_selectedIndex == 0) _buildPurpleHeader(total, male, female),
             Expanded(
               child: _selectedIndex == 0 
-                  ? _buildDashboardContent()
+                  ? _buildDashboardContent(residents)
                   : _selectedIndex == 1
                       ? AdminAlertsScreen(onBack: () => setState(() => _selectedIndex = 0))
                       : AdminProfileScreen(onBack: () => setState(() => _selectedIndex = 0)),
@@ -344,7 +325,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildDashboardContent() {
+  Widget _buildDashboardContent(List<dynamic> residents) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
@@ -400,15 +381,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(16)),
-                child: Text('${_residents.length} Residents', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade800)),
+                child: Text('${residents.length} Residents', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade800)),
               )
             ],
           ),
           const SizedBox(height: 16),
           Builder(
             builder: (context) {
+              if (context.watch<AdminProvider>().isLoading && residents.isEmpty) {
+                return const Center(child: Padding(
+                  padding: EdgeInsets.only(top: 40),
+                  child: CircularProgressIndicator(),
+                ));
+              }
+
               String query = _searchController.text.toLowerCase();
-              List<Map<String, dynamic>> filteredList = _residents.where((r) {
+              List<dynamic> filteredList = residents.where((r) {
                 return r['name'].toString().toLowerCase().contains(query) ||
                        r['room'].toString().toLowerCase().contains(query);
               }).toList();
@@ -432,7 +420,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildResidentCard(Map<String, dynamic> r, int index) {
+  Widget _buildResidentCard(dynamic r, int index) {
     String initial = r['name'].toString().substring(0, 1);
     
     return Container(
@@ -470,11 +458,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildInfoRow('Medical:', r['medical']),
+          _buildInfoRow('Medical:', r['medical_conditions'] ?? 'None'),
           const SizedBox(height: 8),
-          _buildInfoRow('Emergency:', r['emergency']),
+          _buildInfoRow('Emergency:', r['emergency_contact'] ?? 'N/A'),
           const SizedBox(height: 8),
-          _buildInfoRow('Admitted:', r['admitted']),
+          _buildInfoRow('Admitted:', r['admission_date'] ?? 'N/A'),
           const SizedBox(height: 16),
           Row(
             children: [

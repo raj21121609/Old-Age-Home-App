@@ -5,11 +5,18 @@ class AdminProvider extends ChangeNotifier {
   bool _isLoading = false;
   String _error = '';
   List<dynamic> _users = [];
+  List<dynamic> _residents = [];
   int _caretakerCount = 0;
+
+  List<dynamic> _reports = [];
+  List<dynamic> _systemAlerts = [];
 
   bool get isLoading => _isLoading;
   String get error => _error;
   List<dynamic> get users => _users;
+  List<dynamic> get residents => _residents;
+  List<dynamic> get reports => _reports;
+  List<dynamic> get systemAlerts => _systemAlerts;
   int get caretakerCount => _caretakerCount;
 
   Future<void> fetchSystemOverview() async {
@@ -24,6 +31,8 @@ class AdminProvider extends ChangeNotifier {
       } else {
         _users = response['users'] ?? [];
         _caretakerCount = _users.where((u) => u['role'] == 'caretaker').length;
+        _reports = response['daily_reports'] ?? [];
+        _systemAlerts = _reports.where((r) => r['issues'] != null && r['issues'].toString().trim().isNotEmpty).toList();
       }
     } catch (e) {
       _error = 'Failed to load system overview';
@@ -31,5 +40,52 @@ class AdminProvider extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> fetchResidents(int homeId) async {
+    _isLoading = true;
+    _error = '';
+    notifyListeners();
+
+    try {
+      final response = await ApiService.getResidentsByHome(homeId);
+      if (response.containsKey('error')) {
+        _error = response['error'];
+      } else {
+        _residents = response['residents'] ?? [];
+      }
+    } catch (e) {
+      _error = 'Failed to fetch residents';
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<bool> addResident(Map<String, dynamic> data) async {
+    _isLoading = true;
+    _error = '';
+    notifyListeners();
+
+    try {
+      final response = await ApiService.addResident(data);
+      _isLoading = false;
+      if (response.containsKey('error')) {
+        _error = response['error'];
+        notifyListeners();
+        return false;
+      } else {
+        // Refresh list
+        if (data.containsKey('old_age_home_id')) {
+          await fetchResidents(data['old_age_home_id']);
+        }
+        return true;
+      }
+    } catch (e) {
+      _error = 'Failed to add resident';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 }

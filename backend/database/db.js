@@ -45,22 +45,66 @@ const db = new sqlite3.Database(dbPath, (err) => {
         }
       });
 
-      // Elderly table
+      // Elderly table (updated with more fields)
       db.run(`CREATE TABLE IF NOT EXISTS elderly (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         age INTEGER,
-        health_status TEXT,
+        gender TEXT,
+        room TEXT,
+        medical_conditions TEXT,
+        emergency_contact TEXT,
+        admission_date TEXT,
+        old_age_home_id INTEGER,
         caretaker_id INTEGER,
+        FOREIGN KEY (old_age_home_id) REFERENCES old_age_homes(id),
         FOREIGN KEY (caretaker_id) REFERENCES users(id)
       )`);
 
-      // Reports table
+      // Migration for elderly table (SQLite only)
+      const elderlyColumns = [
+        'gender TEXT',
+        'room TEXT',
+        'medical_conditions TEXT',
+        'emergency_contact TEXT',
+        'admission_date TEXT',
+        'old_age_home_id INTEGER'
+      ];
+
+      elderlyColumns.forEach(columnDef => {
+        const columnName = columnDef.split(' ')[0];
+        db.run(`ALTER TABLE elderly ADD COLUMN ${columnDef}`, (err) => {
+          if (err && !err.message.includes('duplicate column name')) {
+            console.log(`Note: Adding ${columnName} to elderly table failed or already exists:`, err.message);
+          }
+        });
+      });
+
+      // Reports table (Basic health status)
       db.run(`CREATE TABLE IF NOT EXISTS reports (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         elderly_id INTEGER,
         health_report TEXT,
         date TEXT,
+        FOREIGN KEY (elderly_id) REFERENCES elderly(id)
+      )`);
+
+      // Daily Activity Reports table (Detailed)
+      db.run(`CREATE TABLE IF NOT EXISTS daily_reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        elderly_id INTEGER,
+        date TEXT,
+        breakfast INTEGER, -- 0 or 1
+        lunch INTEGER,
+        dinner INTEGER,
+        medicine_given INTEGER,
+        medicine_time TEXT,
+        physical_activity TEXT,
+        bathing INTEGER,
+        clothes_changed INTEGER,
+        mood TEXT,
+        issues TEXT,
+        photo_path TEXT,
         FOREIGN KEY (elderly_id) REFERENCES elderly(id)
       )`);
 

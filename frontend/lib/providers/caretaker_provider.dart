@@ -10,6 +10,20 @@ class CaretakerProvider extends ChangeNotifier {
   String get error => _error;
   List<dynamic> get elderly => _elderly;
 
+  List<Map<String, dynamic>> get alerts {
+    return _elderly
+        .where((e) => e['health_status'] == 'attention' || e['health_status'] == 'critical')
+        .map((e) => {
+              'type': 'Emergency',
+              'title': 'Needs Attention',
+              'description': 'Health concern reported for ${e['name']}. Action required.',
+              'location': 'Room ${e['room'] ?? 'Unknown'}',
+              'time': 'Recent',
+              'isNew': true,
+            })
+        .toList();
+  }
+
   Future<void> fetchElderly(int caretakerId) async {
     _isLoading = true;
     _error = '';
@@ -51,6 +65,34 @@ class CaretakerProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
     return false;
+  }
+
+  Future<bool> submitDailyReport(Map<String, dynamic> reportData) async {
+    _isLoading = true;
+    _error = '';
+    notifyListeners();
+
+    try {
+      final response = await ApiService.addDailyReport(reportData);
+      _isLoading = false;
+      if (response.containsKey('error')) {
+        _error = response['error'];
+        notifyListeners();
+        return false;
+      } else {
+        // Refresh elderly list to show updated status
+        if (reportData.containsKey('caretaker_id')) {
+           await fetchElderly(reportData['caretaker_id']);
+        }
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      _error = 'Failed to submit report';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   void triggerEmergency() {

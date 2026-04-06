@@ -115,7 +115,29 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> addDailyReport(Map<String, dynamic> data) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/caretaker/daily-report'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
   // --- GOVERNMENT --- //
+
+  static Future<Map<String, dynamic>> getDailyReportsByHome(int homeId) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/government/reports/$homeId'));
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
 
   static Future<Map<String, dynamic>> getAllElderly() async {
     try {
@@ -188,6 +210,28 @@ class ApiService {
   static Future<Map<String, dynamic>> deleteUser(int userId) async {
     try {
       final response = await http.delete(Uri.parse('$baseUrl/admin/users/$userId'));
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  static Future<Map<String, dynamic>> addResident(Map<String, dynamic> data) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/residents'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  static Future<Map<String, dynamic>> getResidentsByHome(int homeId) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/admin/residents/$homeId'));
       return _handleResponse(response);
     } catch (e) {
       return _handleError(e);

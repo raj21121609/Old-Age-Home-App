@@ -6,5 +6,7 @@ router.post('/users', adminController.createUser);
 router.delete('/users/:id', adminController.deleteUser);
 router.get('/all', adminController.viewAllData);
 router.put('/elderly/:elderly_id/assign', adminController.assignCaretaker);
+router.post('/residents', adminController.addResident);
+router.get('/residents/:home_id', adminController.getResidentsByHome);
 
 module.exports = router;

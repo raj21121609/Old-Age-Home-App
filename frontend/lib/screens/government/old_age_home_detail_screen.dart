@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/government_provider.dart';
 import 'report_detail_screen.dart';
 
 class OldAgeHomeDetailScreen extends StatefulWidget {
+  final int homeId;
   final String homeName;
   final String homeLocation;
   final int residents;
@@ -9,6 +12,7 @@ class OldAgeHomeDetailScreen extends StatefulWidget {
 
   const OldAgeHomeDetailScreen({
     super.key,
+    required this.homeId,
     required this.homeName,
     required this.homeLocation,
     required this.residents,
@@ -26,6 +30,11 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.homeId != 0) {
+        context.read<GovernmentProvider>().fetchHomeReports(widget.homeId);
+      }
+    });
   }
 
   @override
@@ -79,9 +88,9 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildReportsTab(),
-                      const Center(child: Text('Alerts')),
-                      const Center(child: Text('History')),
+                      _buildReportsTab(context, filter: 'today'),
+                      _buildReportsTab(context, filter: 'alerts'),
+                      _buildReportsTab(context, filter: 'history'),
                     ],
                   ),
                 ),
@@ -120,7 +129,23 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
     );
   }
 
-  Widget _buildReportsTab() {
+  Widget _buildReportsTab(BuildContext context, {required String filter}) {
+    final provider = context.watch<GovernmentProvider>();
+    
+    // Simple filter logic
+    // We assume 'date' is YYYY-MM-DD. For now, we simulate filter behavior based on the requirement.
+    // Real app might compare with DateTime.now().
+    final nowStr = DateTime.now().toIso8601String().split('T')[0];
+    
+    List<dynamic> filteredReports = provider.reports.where((r) {
+      final rDate = r['date'] ?? '';
+      final isAttention = r['issues'] != null && r['issues'].toString().trim().isNotEmpty;
+      
+      if (filter == 'alerts') return isAttention;
+      if (filter == 'history') return true; // Just show all past reports for now or rDate != nowStr if we were strict
+      return true; // default 'today' / all
+    }).toList();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -129,7 +154,10 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Daily Reports', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                filter == 'alerts' ? 'Active Alerts' : filter == 'history' ? 'Report History' : 'Daily Reports', 
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+              ),
               TextButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.filter_list, size: 16, color: Colors.blue),
@@ -139,32 +167,24 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
             ],
           ),
           const SizedBox(height: 16),
-          _buildReportCard(
-            name: 'Ramesh Kumar',
-            status: 'normal',
-            room: 'Room 101',
-            date: 'Jan 7, 2026',
-            caretaker: 'Priya Sharma',
-            isNormal: true,
-          ),
-          _buildReportCard(
-            name: 'Lakshmi Devi',
-            status: 'attention',
-            room: 'Room 102',
-            date: 'Jan 7, 2026',
-            caretaker: 'Priya Sharma',
-            isAttention: true,
-            issueText: 'Not feeling well, refused to eat',
-          ),
-          _buildReportCard(
-            name: 'Savitri Sharma',
-            status: 'missing',
-            room: 'Room 104',
-            date: 'Jan 6, 2026',
-            caretaker: 'Unknown',
-            isMissing: true,
-            issueText: 'Report not submitted by caretaker',
-          ),
+          if (provider.isLoading)
+            const Center(child: Padding(padding: EdgeInsets.all(32.0), child: CircularProgressIndicator())),
+          if (!provider.isLoading && filteredReports.isEmpty)
+            Center(child: Padding(padding: const EdgeInsets.all(32.0), child: Text('No entries found for ${filter == 'alerts' ? 'alerts' : filter}.'))),
+          ...filteredReports.map((r) {
+            final bool isAttention = r['issues'] != null && r['issues'].toString().trim().isNotEmpty;
+            return _buildReportCard(
+              report: r,
+              name: r['elderly_name'] ?? 'Unknown',
+              status: isAttention ? 'Attention' : 'Normal',
+              room: 'Room ${r['room'] ?? 'N/A'}',
+              date: r['date'] ?? '',
+              caretaker: r['caretaker_name'] ?? 'Assigned Staff',
+              isNormal: !isAttention,
+              isAttention: isAttention,
+              issueText: isAttention ? r['issues'] : null,
+            );
+          }),
           const SizedBox(height: 24),
         ],
       ),
@@ -172,6 +192,7 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
   }
 
   Widget _buildReportCard({
+    required dynamic report,
     required String name,
     required String status,
     required String room,
@@ -196,12 +217,7 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
           context,
           MaterialPageRoute(
             builder: (context) => ReportDetailScreen(
-              name: name,
-              status: status,
-              room: room,
-              date: date,
-              caretaker: caretaker,
-              isAttention: isAttention,
+              report: report,
             ),
           ),
         );

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/caretaker_provider.dart';
 
 class AlertsScreen extends StatefulWidget {
   final VoidCallback onBack;
@@ -14,41 +16,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   final List<String> filters = ['All', 'Alerts', 'Warnings', 'Updates'];
 
-  // Mock data matching the screenshot exactly
-  final List<Map<String, dynamic>> alerts = [
-    {
-      'type': 'Emergency',
-      'title': 'Emergency Alert',
-      'description': 'Health emergency reported for Ramesh Kumar at Sunshine Old Age Home',
-      'location': 'Sunshine Old Age Home • Ramesh Kumar',
-      'time': '10 mins ago',
-      'isNew': true,
-    },
-    {
-      'type': 'Warning',
-      'title': 'Missing Reports',
-      'description': '5 daily reports not submitted at Seva Sadan',
-      'location': 'Seva Sadan',
-      'time': '2 hours ago',
-      'isNew': true,
-    },
-    {
-      'type': 'Update',
-      'title': 'Inspection Scheduled',
-      'description': 'Site visit scheduled for Golden Years Care Center on Jan 10',
-      'location': 'Golden Years Care Center',
-      'time': '1 day ago',
-      'isNew': false,
-    },
-    {
-      'type': 'Success',
-      'title': 'Report Verified',
-      'description': 'All reports verified for Aashray Care Home',
-      'location': 'Aashray Care Home',
-      'time': '2 days ago',
-      'isNew': false,
-    },
-  ];
+  // Alerts will be fetched dynamically below.
 
   Widget _buildFilterPills() {
     return Container(
@@ -180,6 +148,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final alerts = context.watch<CaretakerProvider>().alerts;
     return Column(
       children: [
         // Blue Header
@@ -216,10 +185,12 @@ class _AlertsScreenState extends State<AlertsScreen> {
               children: [
                 _buildFilterPills(),
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.only(top: 4, bottom: 24),
-                    children: alerts.map((a) => _buildAlertCard(a)).toList(),
-                  ),
+                  child: alerts.isEmpty
+                      ? Center(child: Text('No alerts found.', style: TextStyle(color: Colors.grey.shade600)))
+                      : ListView(
+                          padding: const EdgeInsets.only(top: 4, bottom: 24),
+                          children: alerts.map((a) => _buildAlertCard(a)).toList(),
+                        ),
                 ),
               ],
             ),

@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 
 class ReportDetailScreen extends StatelessWidget {
-  final String name;
-  final String status;
-  final String room;
-  final String date;
-  final String caretaker;
-  final bool isAttention;
+  final dynamic report;
 
   const ReportDetailScreen({
     super.key,
-    required this.name,
-    required this.status,
-    required this.room,
-    required this.date,
-    required this.caretaker,
-    this.isAttention = false,
+    required this.report,
   });
+
+  bool get isAttention => report['issues'] != null && report['issues'].toString().trim().isNotEmpty;
+  String get name => report['elderly_name'] ?? 'Unknown';
+  String get status => isAttention ? 'Attention Needed' : 'Normal';
+  String get room => 'Room ${report['room'] ?? 'N/A'}';
+  String get date => report['date'] ?? '';
+  String get caretaker => report['caretaker_name'] ?? 'Assigned Staff';
 
   @override
   Widget build(BuildContext context) {
@@ -146,36 +143,38 @@ class ReportDetailScreen extends StatelessWidget {
       title: 'Meals',
       child: Column(
         children: [
-          _buildRowItem('Breakfast', isAttention ? false : true, yesText: 'Yes', noText: 'No'),
+          _buildRowItem('Breakfast', report['breakfast'] == 1, yesText: 'Yes', noText: 'No'),
           const SizedBox(height: 12),
-          _buildRowItem('Lunch', isAttention ? false : true, yesText: 'Yes', noText: 'No'),
+          _buildRowItem('Lunch', report['lunch'] == 1, yesText: 'Yes', noText: 'No'),
           const SizedBox(height: 12),
-          _buildRowItem('Dinner', isAttention ? false : true, yesText: 'Yes', noText: 'No'),
+          _buildRowItem('Dinner', report['dinner'] == 1, yesText: 'Yes', noText: 'No'),
         ],
       ),
     );
   }
 
   Widget _buildMedicineCard() {
+    bool medicineGiven = report['medicine_given'] == 1;
     return _buildDetailSection(
       icon: Icons.medical_services_outlined,
       iconColor: Colors.red,
       title: 'Medicine',
-      child: isAttention 
-        ? const Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Icon(Icons.close, color: Colors.red, size: 16),
-              SizedBox(width: 4),
-              Text('Not Given', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600, fontSize: 13)),
-            ],
-          )
-        : const Row(
-            children: [
-              Icon(Icons.check, color: Colors.green, size: 16),
-              SizedBox(width: 4),
-              Text('Given', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600, fontSize: 13)),
+              Icon(medicineGiven ? Icons.check : Icons.close, color: medicineGiven ? Colors.green : Colors.red, size: 16),
+              const SizedBox(width: 4),
+              Text(medicineGiven ? 'Given' : 'Not Given', style: TextStyle(color: medicineGiven ? Colors.green : Colors.red, fontWeight: FontWeight.w600, fontSize: 13)),
             ],
           ),
+          if (medicineGiven && report['medicine_time'] != null) ...[
+            const SizedBox(height: 4),
+            Text('Time: ${report['medicine_time']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          ]
+        ],
+      ),
     );
   }
 
@@ -184,7 +183,7 @@ class ReportDetailScreen extends StatelessWidget {
       icon: Icons.directions_walk,
       iconColor: Colors.orange,
       title: 'Activity',
-      child: Text(isAttention ? 'Bed Rest' : 'Light Walk', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+      child: Text(report['physical_activity'] ?? 'None', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
     );
   }
 
@@ -195,15 +194,17 @@ class ReportDetailScreen extends StatelessWidget {
       title: 'Hygiene',
       child: Column(
         children: [
-          _buildRowItem('Bathing', isAttention ? false : true, noText: 'Not Done', yesText: 'Done'),
+          _buildRowItem('Bathing', report['bathing'] == 1, noText: 'Not Done', yesText: 'Done'),
           const SizedBox(height: 12),
-          _buildRowItem('Clothes Changed', isAttention ? false : true, noText: 'Not Done', yesText: 'Done'),
+          _buildRowItem('Clothes Changed', report['clothes_changed'] == 1, noText: 'Not Done', yesText: 'Done'),
         ],
       ),
     );
   }
 
   Widget _buildMoodCard() {
+    String mood = report['mood'] ?? 'Normal';
+    bool isPositive = mood == 'Happy' || mood == 'Normal';
     return _buildDetailSection(
       icon: Icons.mood,
       iconColor: Colors.orange,
@@ -211,10 +212,10 @@ class ReportDetailScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isAttention ? Colors.blue.shade50 : Colors.green.shade50,
+          color: isPositive ? Colors.green.shade50 : Colors.blue.shade50,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Text(isAttention ? 'Sad' : 'Happy', style: TextStyle(color: isAttention ? Colors.blue.shade700 : Colors.green.shade700, fontWeight: FontWeight.bold, fontSize: 13)),
+        child: Text(mood, style: TextStyle(color: isPositive ? Colors.green.shade700 : Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: 13)),
       ),
     );
   }
@@ -239,7 +240,7 @@ class ReportDetailScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Text('Not feeling well, refused to eat', style: TextStyle(color: Colors.red.shade900, fontSize: 14)),
+          Text(report['issues'] ?? 'No specific issues described.', style: TextStyle(color: Colors.red.shade900, fontSize: 14)),
         ],
       ),
     );

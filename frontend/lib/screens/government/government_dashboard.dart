@@ -32,7 +32,6 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
     final nameCtrl = TextEditingController();
     final locationCtrl = TextEditingController();
     final districtCtrl = TextEditingController();
-    final residentsCtrl = TextEditingController();
 
     showDialog(
       context: context,
@@ -75,9 +74,6 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
                 const SizedBox(height: 16),
                 _buildLabel('District'),
                 _buildTextField(districtCtrl, 'e.g., New Delhi'),
-                const SizedBox(height: 16),
-                _buildLabel('Total Residents'),
-                _buildTextField(residentsCtrl, 'Number of residents', keyboardType: TextInputType.number),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -109,7 +105,6 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
                               'name': nameCtrl.text,
                               'location': locationCtrl.text,
                               'district': districtCtrl.text,
-                              'residents': residentsCtrl.text,
                             });
                             Navigator.pop(ctx);
                           }
@@ -164,6 +159,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
             Expanded(
               child: _selectedIndex == 1 
                   ? OldAgeHomeDetailScreen(
+                      homeId: 0,
                       homeName: 'All Old Age Homes',
                       homeLocation: 'Consolidated Overview',
                       residents: provider.totalResidents,
@@ -211,11 +207,11 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
 
     for (var h in provider.homes) {
       bool pending = h['status'] == 'pending';
-      int residents = (h['residents_count'] as num?)?.toInt() ?? 32;
+      int residents = (h['actual_residents_count'] as num?)?.toInt() ?? 0;
       int alerts = (h['alerts_count'] as num?)?.toInt() ?? 0;
       
       if (!pending && alerts == 0) {
-         residents = 45; // Logic matched from cards fallback
+         // Logic matched from cards fallback
       }
       
       totalResidents += residents;
@@ -344,7 +340,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
           ...(() {
             final mappedList = provider.homes.map((h) {
               bool pending = h['status'] == 'pending';
-              int residents = h['residents_count'] ?? 32;
+              int residents = (h['actual_residents_count'] as num?)?.toInt() ?? 0;
               int pendingReports = h['pending_count'] ?? (pending ? 1 : 0);
               int alerts = h['alerts_count'] ?? 0;
               String lastInspection = pending ? 'Awaiting Approval' : '5 days ago';
@@ -362,11 +358,11 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
                 if (alerts > 0) {
                   isAlert = true;
                 } else {
-                  isOk = true; residents = 45; pendingReports = 2; alerts = 0;
+                  isOk = true; pendingReports = 2; alerts = 0;
                 }
               }
-              return {
-                'h': h, 'name': name, 'address': address, 'residents': residents,
+               return {
+                'homeId': h['id'], 'name': name, 'address': address, 'residents': residents,
                 'pending': pendingReports, 'alerts': alerts, 'lastInspection': lastInspection,
                 'isOk': isOk, 'isWarning': isWarning, 'isAlert': isAlert
               };
@@ -380,6 +376,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
 
             return mappedList.map((data) => _buildHomeCard(
               context,
+              data['homeId'] as int,
               data['name'].toString(),
               data['address'].toString(),
               residents: data['residents'] as int,
@@ -417,13 +414,14 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
     );
   }
 
-  Widget _buildHomeCard(BuildContext context, String name, String address, {required int residents, required int pending, required int alerts, required String lastInspection, bool isOk = false, bool isWarning = false, bool isAlert = false}) {
+  Widget _buildHomeCard(BuildContext context, int homeId, String name, String address, {required int residents, required int pending, required int alerts, required String lastInspection, bool isOk = false, bool isWarning = false, bool isAlert = false}) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => OldAgeHomeDetailScreen(
+              homeId: homeId,
               homeName: name,
               homeLocation: address,
               residents: residents,
@@ -484,6 +482,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => OldAgeHomeDetailScreen(
+                          homeId: homeId,
                           homeName: name,
                           homeLocation: address,
                           residents: residents,

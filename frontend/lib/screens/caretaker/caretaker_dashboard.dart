@@ -16,6 +16,7 @@ class CaretakerDashboard extends StatefulWidget {
 
 class _CaretakerDashboardState extends State<CaretakerDashboard> {
   int _selectedIndex = 0;
+  dynamic _selectedResident;
 
   @override
   void initState() {
@@ -44,6 +45,7 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
       body: SafeArea(
         child: _selectedIndex == 1
             ? DailyReportScreen(
+                resident: _selectedResident,
                 onBack: () => setState(() => _selectedIndex = 0),
                 onSubmit: () {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted securely to the Government portal!')));
@@ -133,7 +135,13 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
             else lastReportText = lang.t('Last report: Yesterday', 'अंतिम रिपोर्ट: कल');
 
             return _buildResidentCard(
-              eName, '$eAge $ageStr • $roomStr', lastReportText, eName.isNotEmpty ? eName[0] : '?', Colors.blue, isOk, warning: isWarning, alert: isAlert
+              eName, '$eAge $ageStr • $roomStr', lastReportText, eName.isNotEmpty ? eName[0] : '?', Colors.blue, isOk, warning: isWarning, alert: isAlert,
+              onAddReport: () {
+                setState(() {
+                  _selectedResident = e;
+                  _selectedIndex = 1;
+                });
+              }
             );
           }),
         ],
@@ -198,7 +206,10 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildActionCard(lang.t('Add Report', 'रिपोर्ट जोड़ें'), Icons.description_outlined, Colors.blue, callback: () {
-                  setState(() { _selectedIndex = 1; });
+                   // Show a selection dialog or just hint to click a card
+                   ScaffoldMessenger.of(context).showSnackBar(
+                     SnackBar(content: Text(lang.t('Select a resident below to add a report', 'रिपोर्ट जोड़ने के लिए नीचे एक निवासी चुनें')))
+                   );
                 }),
                 _buildActionCard(lang.t('Past Reports', 'पिछली रिपोर्ट'), Icons.home_outlined, Colors.green, callback: () {}),
                 _buildActionCard(lang.t('Emergency', 'आपातकालीन'), Icons.error_outline, Colors.red, callback: _triggerEmergency),
@@ -233,7 +244,7 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
     );
   }
 
-  Widget _buildResidentCard(String name, String details, String lastReport, String initial, Color color, bool ok, {bool warning = false, bool alert = false}) {
+  Widget _buildResidentCard(String name, String details, String lastReport, String initial, Color color, bool ok, {bool warning = false, bool alert = false, required VoidCallback onAddReport}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -259,7 +270,14 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
           else if (warning) 
             Container(padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.orange.shade200)), child: const Icon(Icons.hourglass_bottom, color: Colors.orange, size: 16))
           else if (alert) 
-            Container(padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.red.shade200)), child: const Icon(Icons.priority_high, color: Colors.red, size: 16))
+            Container(padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.red.shade200)), child: const Icon(Icons.priority_high, color: Colors.red, size: 16)),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: onAddReport,
+            icon: const Icon(Icons.add_circle_outline, color: Colors.blue),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          )
         ],
       ),
     );

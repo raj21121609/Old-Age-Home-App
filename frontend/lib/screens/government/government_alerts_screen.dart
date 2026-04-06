@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/government_provider.dart';
 
 class GovernmentAlertsScreen extends StatelessWidget {
   final VoidCallback? onBack;
@@ -7,6 +9,8 @@ class GovernmentAlertsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final systemAlerts = context.watch<GovernmentProvider>().systemAlerts;
+
     return Container(
       color: const Color(0xFFF4F7FB),
       child: Column(
@@ -25,59 +29,39 @@ class GovernmentAlertsScreen extends StatelessWidget {
                           _buildTabPill('All', isSelected: true),
                           const SizedBox(width: 8),
                           _buildTabPill('Alerts'),
-                          const SizedBox(width: 8),
-                          _buildTabPill('Warnings'),
-                          const SizedBox(width: 8),
-                          _buildTabPill('Updates'),
                         ],
                       ),
                     ),
                   ),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      _buildAlertCard(
-                        title: 'Emergency Alert',
-                        description: 'Health emergency reported for Ramesh Kumar at Sunshine Old Age Home',
-                        location: 'Sunshine Old Age Home • Ramesh Kumar',
-                        time: '10 mins ago',
-                        icon: Icons.warning_amber_rounded,
-                        color: Colors.red,
-                        isNew: true,
+                if (systemAlerts.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Center(child: Text('No system alerts at the moment.', style: TextStyle(color: Colors.grey.shade600))),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final a = systemAlerts[index];
+                          return _buildAlertCard(
+                            title: 'Home Alert - ${a['home_name']}',
+                            description: '${a['issues']}',
+                            location: '${a['home_name']} • ${a['elderly_name']}',
+                            time: a['date'] ?? 'Recent',
+                            icon: Icons.warning_amber_rounded,
+                            color: Colors.red,
+                            isNew: true,
+                          );
+                        },
+                        childCount: systemAlerts.length,
                       ),
-                      _buildAlertCard(
-                        title: 'Missing Reports',
-                        description: '5 daily reports not submitted at Seva Sadan',
-                        location: 'Seva Sadan',
-                        time: '2 hours ago',
-                        icon: Icons.schedule,
-                        color: Colors.amber,
-                        isNew: true,
-                      ),
-                      _buildAlertCard(
-                        title: 'Inspection Scheduled',
-                        description: 'Site visit scheduled for Golden Years Care Center on Jan 10',
-                        location: 'Golden Years Care Center',
-                        time: '1 day ago',
-                        icon: Icons.shield_outlined,
-                        color: Colors.blue,
-                        isNew: false,
-                      ),
-                      _buildAlertCard(
-                        title: 'Report Verified',
-                        description: 'All reports verified for Aashray Care Home',
-                        location: 'Aashray Care Home',
-                        time: '2 days ago',
-                        icon: Icons.check_circle_outline,
-                        color: Colors.green,
-                        isNew: false,
-                      ),
-                      const SizedBox(height: 24),
-                    ]),
-                  ),
-                )
+                    ),
+                  )
               ],
             ),
           )

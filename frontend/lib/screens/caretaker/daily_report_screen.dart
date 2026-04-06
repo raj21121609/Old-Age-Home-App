@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/caretaker_provider.dart';
+import '../../providers/auth_provider.dart';
 
 class DailyReportScreen extends StatefulWidget {
   final VoidCallback onBack;
   final VoidCallback onSubmit;
+  final dynamic resident;
 
   const DailyReportScreen({
     super.key,
     required this.onBack,
     required this.onSubmit,
+    required this.resident,
   });
 
   @override
@@ -169,9 +174,9 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text('Daily Activity Report', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text('Report for ${widget.resident['name']}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
               const SizedBox(height: 4),
-              const Text('21 March 2026', style: TextStyle(color: Colors.white, fontSize: 12)),
+              Text('Room ${widget.resident['room']} • 21 March 2026', style: const TextStyle(color: Colors.white, fontSize: 12)),
             ],
           ),
         ),
@@ -296,14 +301,44 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                 ),
                 const SizedBox(height: 8),
                 ElevatedButton(
-                  onPressed: widget.onSubmit,
+                  onPressed: () async {
+                    final caretaker = context.read<CaretakerProvider>();
+                    final auth = context.read<AuthProvider>();
+                    
+                    final success = await caretaker.submitDailyReport({
+                      'elderly_id': widget.resident['id'],
+                      'caretaker_id': auth.user?['id'],
+                      'date': '2026-03-21', // Local date would be better but keeping consistency
+                      'breakfast': breakfast,
+                      'lunch': lunch,
+                      'dinner': dinner,
+                      'medicine_given': medicineGiven,
+                      'medicine_time': medicineTime,
+                      'physical_activity': physicalActivity,
+                      'bathing': bathingCompleted,
+                      'clothes_changed': clothesChanged,
+                      'mood': mood,
+                      'issues': _issuesController.text,
+                      'photo_path': '', // Handle if needed
+                    });
+
+                    if (success) {
+                      widget.onSubmit();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: ${caretaker.error}'))
+                      );
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00A843), // Exact matching green
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     elevation: 0,
                   ),
-                  child: const Text('Submit Report', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: context.watch<CaretakerProvider>().isLoading 
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Submit Report', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
                 const SizedBox(height: 24),
               ],

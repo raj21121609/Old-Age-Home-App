@@ -36,9 +36,66 @@ exports.updateHealthStatus = (req, res) => {
 
 exports.viewAssignedElderly = (req, res) => {
   const { caretaker_id } = req.params;
-  const query = 'SELECT * FROM elderly WHERE caretaker_id = ?';
-  db.all(query, [caretaker_id], (err, rows) => {
-    if (err) return res.status(500).json({ error: 'Failed to fetch elderly data' });
-    res.json({ elderly: rows });
+  
+  // First get the old_age_home_id of this caretaker
+  db.get('SELECT old_age_home_id FROM users WHERE id = ?', [caretaker_id], (err, user) => {
+    if (err || !user) return res.status(404).json({ error: 'Caretaker not found' });
+    
+    // Show all elderly persons belonging to the same home
+    const query = 'SELECT * FROM elderly WHERE old_age_home_id = ? OR caretaker_id = ?';
+    db.all(query, [user.old_age_home_id, caretaker_id], (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Failed to fetch elderly data' });
+      res.json({ elderly: rows });
+    });
+  });
+};
+
+exports.addDailyReport = (req, res) => {
+  const {
+    elderly_id,
+    date,
+    breakfast,
+    lunch,
+    dinner,
+    medicine_given,
+    medicine_time,
+    physical_activity,
+    bathing,
+    clothes_changed,
+    mood,
+    issues,
+    photo_path
+  } = req.body;
+
+  if (!elderly_id || !date) {
+    return res.status(400).json({ error: 'elderly_id and date are required' });
+  }
+
+  const query = `
+    INSERT INTO daily_reports (
+      elderly_id, date, breakfast, lunch, dinner, 
+      medicine_given, medicine_time, physical_activity, 
+      bathing, clothes_changed, mood, issues, photo_path
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  const params = [
+    elderly_id, date, breakfast ? 1 : 0, lunch ? 1 : 0, dinner ? 1 : 0,
+    medicine_given ? 1 : 0, medicine_time, physical_activity,
+    bathing ? 1 : 0, clothes_changed ? 1 : 0, mood, issues, photo_path
+  ];
+
+  db.run(query, params, function(err) {
+    if (err) {
+      console.error('Error adding daily report:', err.message);
+      return res.status(500).json({ error: 'Failed to add daily report' });
+    }
+    
+    // Also update health status in elderly table
+    const statusQuery = 'UPDATE elderly SET health_status = ? WHERE id = ?';
+    const status = issues && issues.trim().length > 0 ? 'attention' : 'good';
+    db.run(statusQuery, [status, elderly_id]);
+
+    res.status(201).json({ message: 'Daily report added successfully', id: this.lastID });
   });
 };
