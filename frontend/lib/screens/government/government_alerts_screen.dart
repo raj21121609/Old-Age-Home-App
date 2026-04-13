@@ -2,66 +2,83 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/government_provider.dart';
 
-class GovernmentAlertsScreen extends StatelessWidget {
+class GovernmentAlertsScreen extends StatefulWidget {
   final VoidCallback? onBack;
   
   const GovernmentAlertsScreen({super.key, this.onBack});
+
+  @override
+  State<GovernmentAlertsScreen> createState() => _GovernmentAlertsScreenState();
+}
+
+class _GovernmentAlertsScreenState extends State<GovernmentAlertsScreen> {
+  String _selectedFilter = 'All Alerts';
 
   @override
   Widget build(BuildContext context) {
     final systemAlerts = context.watch<GovernmentProvider>().systemAlerts;
 
     return Container(
-      color: const Color(0xFFF4F7FB),
+      color: const Color(0xFFF7F8FA),
       child: Column(
         children: [
-          _buildHeader(context),
+          _buildTopHeader(),
           Expanded(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Recent Notifications', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('Mark all as read', style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold, fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 36,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: [
+                      _buildFilterChip('All Alerts', _selectedFilter == 'All Alerts', () => setState(() => _selectedFilter = 'All Alerts')),
+                      _buildFilterChip('Critical', _selectedFilter == 'Critical', () => setState(() => _selectedFilter = 'Critical')),
+                      _buildFilterChip('Pending', _selectedFilter == 'Pending', () => setState(() => _selectedFilter = 'Pending')),
+                      _buildFilterChip('System', _selectedFilter == 'System', () => setState(() => _selectedFilter = 'System')),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (systemAlerts.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(48.0),
+                    child: Center(
+                      child: Column(
                         children: [
-                          _buildTabPill('All', isSelected: true),
-                          const SizedBox(width: 8),
-                          _buildTabPill('Alerts'),
+                          Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text('No new alerts reported recently.', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
                         ],
                       ),
                     ),
-                  ),
-                ),
-                if (systemAlerts.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Center(child: Text('No system alerts at the moment.', style: TextStyle(color: Colors.grey.shade600))),
-                    ),
                   )
                 else
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final a = systemAlerts[index];
-                          return _buildAlertCard(
-                            title: 'Home Alert - ${a['home_name']}',
-                            description: '${a['issues']}',
-                            location: '${a['home_name']} • ${a['elderly_name']}',
-                            time: a['date'] ?? 'Recent',
-                            icon: Icons.warning_amber_rounded,
-                            color: Colors.red,
-                            isNew: true,
-                          );
-                        },
-                        childCount: systemAlerts.length,
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: systemAlerts.map((a) => _buildAlertCard(
+                        title: 'ALERT: ${a['home_name']}',
+                        description: '${a['issues']}',
+                        subText: '${a['elderly_name']} • Room ${a['room'] ?? 'N/A'}',
+                        time: a['date'] ?? 'Just now',
+                        isCritical: true,
+                      )).toList(),
                     ),
-                  )
+                  ),
+                const SizedBox(height: 32),
               ],
             ),
           )
@@ -70,50 +87,57 @@ class GovernmentAlertsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildTopHeader() {
     return Container(
-      width: double.infinity,
-      color: const Color(0xFF048A39), // Green theme
-      padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      color: const Color(0xFFF7F8FA),
+      child: Row(
         children: [
-          if (onBack != null)
-            GestureDetector(
-              onTap: onBack,
-              child: const Row(
-                children: [
-                  Icon(Icons.arrow_back, color: Colors.white, size: 18),
-                  SizedBox(width: 8),
-                  Text('Back', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
-                ],
-              ),
+          if (widget.onBack != null)
+            IconButton(
+              onPressed: widget.onBack,
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.black87),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
             ),
-          if (onBack != null) const SizedBox(height: 16),
-          const Text('Notifications', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(height: 4),
-          const Text('Stay updated with alerts', style: TextStyle(fontSize: 14, color: Colors.white70)),
+          if (widget.onBack != null) const SizedBox(width: 12),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Monitoring Feed',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+              Text(
+                'LIVE UPDATES',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red, letterSpacing: 0.5),
+              )
+            ],
+          ),
+          const Spacer(),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.tune_rounded, color: Colors.black54)),
         ],
       ),
     );
   }
 
-  Widget _buildTabPill(String text, {bool isSelected = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.white : Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: isSelected 
-            ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))]
-            : [],
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: isSelected ? Colors.black : Colors.black87,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-          fontSize: 13,
+  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF048A39) : Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black87,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontSize: 13,
+          ),
         ),
       ),
     );
@@ -122,19 +146,24 @@ class GovernmentAlertsScreen extends StatelessWidget {
   Widget _buildAlertCard({
     required String title,
     required String description,
-    required String location,
+    required String subText,
     required String time,
-    required IconData icon,
-    required MaterialColor color,
-    required bool isNew,
+    bool isCritical = false,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.shade50.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.shade200),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          )
+        ],
+        border: Border.all(color: isCritical ? Colors.red.shade100 : Colors.transparent),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,38 +171,38 @@ class GovernmentAlertsScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(icon, color: color.shade700, size: 20),
-                  const SizedBox(width: 8),
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                ],
+              Expanded(
+                child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.black87)),
               ),
-              if (isNew)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade600,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text('New', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                )
+              Text(time, style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.w600)),
             ],
           ),
           const SizedBox(height: 8),
-          Text(description, style: TextStyle(color: Colors.blueGrey.shade800, fontSize: 13, height: 1.4)),
+          Text(description, style: TextStyle(color: Colors.blueGrey.shade700, fontSize: 13, height: 1.5)),
           const SizedBox(height: 16),
           Row(
             children: [
-              Icon(Icons.location_on, size: 12, color: color.shade700),
-              const SizedBox(width: 4),
-              Expanded(child: Text(location, style: TextStyle(color: Colors.blueGrey.shade600, fontSize: 12))),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isCritical ? Colors.red.shade50 : Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, size: 14, color: isCritical ? Colors.red : Colors.blue),
+                    const SizedBox(width: 6),
+                    Text(isCritical ? 'URGENT' : 'INFO', style: TextStyle(color: isCritical ? Colors.red : Colors.blue, fontWeight: FontWeight.bold, fontSize: 10)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(subText, style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.w500)),
             ],
-          ),
-          const SizedBox(height: 8),
-          Text(time, style: TextStyle(color: Colors.blueGrey.shade400, fontSize: 12)),
+          )
         ],
       ),
     );
   }
 }
+

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +13,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isObscure = true;
 
   void _login(String fallbackRole) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -51,111 +52,308 @@ class _LoginScreenState extends State<LoginScreen> {
     // Determine target role metadata for branding only
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final String role = args?['role'] ?? 'caretaker';
-    String roleTitle = role == 'government' ? 'Government Officer' : role == 'admin' ? 'Administrator' : 'Caretaker';
 
     // Efficiently hook exactly onto AuthProvider's loading Boolean
     final isLoading = context.watch<AuthProvider>().isLoading;
+    final height = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(
-                alignment: Alignment.center,
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: const BoxDecoration(
-                        color: AppColors.primaryBlue,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.shield_outlined, color: Colors.white, size: 32),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('Senior Care Monitoring', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                    const SizedBox(height: 8),
-                    const Text('Secure Login', style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 40),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: const Row(
-                  children: [
-                    Icon(Icons.arrow_back_ios, size: 14, color: AppColors.primaryBlue),
-                    SizedBox(width: 4),
-                    Text('Back', style: TextStyle(color: AppColors.primaryBlue, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text('Enter Credentials', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-              const SizedBox(height: 8),
-              Text('Login as $roleTitle securely', style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-              const SizedBox(height: 24),
-              
-              const Text('Email Address', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  hintText: 'Enter your email',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  filled: true,
-                  fillColor: AppColors.inputBg,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text('Password', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'Enter your password',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  filled: true,
-                  fillColor: AppColors.inputBg,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                ),
-              ),
-              const SizedBox(height: 32),
-              isLoading 
-                ? const Center(child: CircularProgressIndicator()) 
-                : ElevatedButton(
-                    onPressed: () => _login(role),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                  ),
-              const SizedBox(height: 16),
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.pushNamed(context, '/register', arguments: {'role': role}),
-                  child: const Text('Don\'t have an account? Register here.', style: TextStyle(color: AppColors.primaryBlue)),
-                ),
-              ),
-              const SizedBox(height: 40),
-              const Center(
-                child: Text('Secured by Government of India', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-              ),
-            ],
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Top Background Image
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: height * 0.45,
+            child: Image.network(
+              'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=800&q=80',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
+          // Logo over top image
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 24,
+            left: 24,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.eco, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Serenity Care',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Back button could go here or app delegates to hardware back.
+          
+          // White curved bottom sheet
+          Positioned(
+            top: height * 0.35,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Welcome Back',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E2125),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Sign in to manage your care sanctuary',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      TextField(
+                        controller: _emailController,
+                        decoration: InputDecoration(
+                          hintText: 'Email Address',
+                          hintStyle: TextStyle(color: Colors.grey.shade500),
+                          filled: true,
+                          fillColor: const Color(0xFFF3F4F6),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: _isObscure,
+                        decoration: InputDecoration(
+                          hintText: 'Password',
+                          hintStyle: TextStyle(color: Colors.grey.shade500),
+                          filled: true,
+                          fillColor: const Color(0xFFF3F4F6),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          suffixIcon: Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: IconButton(
+                              icon: Icon(
+                                _isObscure ? Icons.visibility : Icons.visibility_off,
+                                color: Colors.grey.shade500,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isObscure = !_isObscure;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            // TODO: Implement Forgot Password
+                          },
+                          child: const Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              color: Color(0xFF065F26),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : ElevatedButton(
+                              onPressed: () => _login(role),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF065F26),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 18),
+                                elevation: 0,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Text(
+                                    'Log In',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                                ],
+                              ),
+                            ),
+                      const SizedBox(height: 48),
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'OR CONNECT WITH',
+                              style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ),
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {},
+                              borderRadius: BorderRadius.circular(30),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF3F4F6),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.network(
+                                      'https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png',
+                                      height: 20,
+                                      width: 20,
+                                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.g_mobiledata, size: 24),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      'Google',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {},
+                              borderRadius: BorderRadius.circular(30),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2D3748),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(Icons.apple, color: Colors.white, size: 22),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Apple',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 48),
+                      Center(
+                        child: RichText(
+                          text: TextSpan(
+                            text: "Don't have an account? ",
+                            style: const TextStyle(
+                              color: Colors.black54,
+                              fontSize: 14,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'Join Serenity Care',
+                                style: const TextStyle(
+                                  color: Color(0xFF065F26),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.pushNamed(context, '/register', arguments: {'role': role});
+                                  },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+

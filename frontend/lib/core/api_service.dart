@@ -5,12 +5,11 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiService {
-  // REPLACE WITH YOUR PC'S IP ADDRESS IF TESTING ON PHYSICAL DEVICE
-  static const String _localIp = '192.168.1.7'; 
+  // Use the actual Wi-Fi IP address 192.168.1.6 so the physical phone on the same network can reach it
+  static const String _localIp = '192.168.1.6'; 
 
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:5000/api';
-    // Use the actual Wi-Fi IP address so physical devices can reach the backend
     if (Platform.isAndroid) return 'http://$_localIp:5000/api';
     return 'http://localhost:5000/api';
   }

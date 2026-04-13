@@ -60,26 +60,33 @@ class _AdminAlertsScreenState extends State<AdminAlertsScreen> {
 
   Widget _buildPurpleHeader() {
     return Container(
-      width: double.infinity,
-      color: const Color(0xFF8B21C6), // Admin deep purple
-      padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Row(
         children: [
-          GestureDetector(
-            onTap: widget.onBack ?? () => Navigator.pop(context),
-            child: const Row(
-              children: [
-                Icon(Icons.arrow_back, color: Colors.white, size: 18),
-                SizedBox(width: 8),
-                Text('Back', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
-              ],
+          if (widget.onBack != null)
+            GestureDetector(
+              onTap: widget.onBack,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
+                child: const Icon(Icons.arrow_back, color: Color(0xFF1E2125), size: 20),
+              ),
             ),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Notifications', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF1E2125))),
+              Text('Stay updated with alerts', style: TextStyle(fontSize: 11, color: Colors.black54)),
+            ],
           ),
-          const SizedBox(height: 24),
-          const Text('Notifications', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(height: 4),
-          const Text('Stay updated with alerts', style: TextStyle(fontSize: 14, color: Colors.white70)),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
+            child: const Icon(Icons.notifications_active, color: Color(0xFF16A34A), size: 20),
+          ),
         ],
       ),
     );
