@@ -66,6 +66,6 @@ exports.login = async (req, res) => {
     });
   } catch (err) {
     console.error('Database error during login:', err.message);
-    return res.status(500).json({ error: 'Database error during login' });
+    return res.status(500).json({ error: `Database error during login: ${err.message}` });
   }
 };

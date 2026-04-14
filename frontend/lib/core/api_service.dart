@@ -9,9 +9,19 @@ class ApiService {
   static const String _localIp = '192.168.1.5'; 
 
   static String get baseUrl {
-    if (kIsWeb) return 'http://localhost:5000/api';
-    if (Platform.isAndroid) return 'http://$_localIp:5000/api';
-    return 'http://localhost:5000/api';
+    // PRODUCTION: Your Render URL
+    const String prodUrl = 'https://saanjh-xl2k.onrender.com/api';
+    
+    // LOCAL: Set this to true to use your local backend
+    const bool useLocal = false;
+
+    if (useLocal) {
+      if (kIsWeb) return 'http://localhost:5000/api';
+      if (Platform.isAndroid) return 'http://$_localIp:5000/api';
+      return 'http://localhost:5000/api';
+    }
+    
+    return prodUrl;
   }
 
   // HELPER: Handle HTTP Responses consistently
