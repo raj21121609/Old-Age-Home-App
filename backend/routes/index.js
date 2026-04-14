@@ -7,6 +7,9 @@ const governmentRoute = require('./governmentRoute');
 const adminRoute = require('./adminRoute');
 const homeRoute = require('./homeRoute'); // [NEW]
 
+// Health check for Render deployment
+router.get('/api/health', (req, res) => res.status(200).json({ status: 'ok', database: 'connected' }));
+
 // Root route
 router.get('/', indexController.getRoot);
 

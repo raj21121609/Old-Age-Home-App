@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../theme/app_colors.dart';
 import '../../core/api_service.dart';
+import 'package:flutter/gestures.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -79,97 +79,194 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final isLoading = context.watch<AuthProvider>().isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Register', style: TextStyle(color: AppColors.textPrimary)),
-        backgroundColor: AppColors.background,
+        title: const Text('Register', style: TextStyle(color: Color(0xFF1E2125), fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primaryBlue),
+        iconTheme: const IconThemeData(color: Color(0xFF1E2125)),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Create an Account', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-            const SizedBox(height: 8),
-            Text('Signing up as a ${role.toUpperCase()}', style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-            const SizedBox(height: 32),
-            
-            _buildTextField('Full Name', Icons.person_outline, _nameController),
-            const SizedBox(height: 16),
-            _buildTextField('Email Address', Icons.email_outlined, _emailController),
-            const SizedBox(height: 16),
-            _buildTextField('Password', Icons.lock_outline, _passwordController, obscure: true),
-            
-            if (role == 'caretaker' || role == 'admin') ...[
-              const SizedBox(height: 16),
-              const Text('Assigned Old Age Home', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-              const SizedBox(height: 8),
-              _homes.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text('Loading homes or none available...', style: TextStyle(color: Colors.grey)),
-                  )
-                : Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.inputBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int>(
-                        value: _selectedHomeId,
-                        isExpanded: true,
-                        hint: const Text('Select Home'),
-                        items: _homes.map((h) => DropdownMenuItem<int>(
-                          value: h['id'],
-                          child: Text(h['name'].toString()),
-                        )).toList(),
-                        onChanged: (val) => setState(() => _selectedHomeId = val),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48.0),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Create Your Account',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E2125),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Get started with Serenity Care',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                _buildTextField('Full Name', Icons.person_outline, _nameController),
+                const SizedBox(height: 16),
+                _buildTextField('Email Address', Icons.email_outlined, _emailController),
+                const SizedBox(height: 16),
+                _buildTextField('Password', Icons.lock_outline, _passwordController, obscure: true),
+                
+                if (role == 'caretaker' || role == 'admin') ...[
+                  const SizedBox(height: 16),
+                  _homes.isEmpty
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.home_work_outlined, color: Colors.grey.shade500),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                'Loading homes...', 
+                                style: TextStyle(color: Colors.black54),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<int>(
+                            value: _selectedHomeId,
+                            isExpanded: true,
+                            icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
+                            hint: Row(
+                              children: [
+                                Icon(Icons.home_work_outlined, color: Colors.grey.shade500),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Select Home', 
+                                    style: TextStyle(color: Colors.grey.shade500),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            items: _homes.map((h) => DropdownMenuItem<int>(
+                              value: h['id'],
+                              child: Row(
+                                children: [
+                                  Icon(Icons.home_work_outlined, color: Colors.grey.shade500),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      h['name'].toString(),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )).toList(),
+                            onChanged: (val) => setState(() => _selectedHomeId = val),
+                          ),
+                        ),
                       ),
+                ],
+                const SizedBox(height: 32),
+                
+                isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ElevatedButton(
+                        onPressed: () => _register(role),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF065F26),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          elevation: 0,
+                        ),
+                        child: const Text('Create Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                const SizedBox(height: 32),
+                Center(
+                  child: RichText(
+                    text: TextSpan(
+                      text: "Already have an account? ",
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 14,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'Log In',
+                          style: const TextStyle(
+                            color: Color(0xFF065F26),
+                            fontWeight: FontWeight.bold,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              Navigator.pushReplacementNamed(context, '/login', arguments: {'role': role});
+                            },
+                        ),
+                      ],
                     ),
                   ),
-            ],
-
-            const SizedBox(height: 40),
-            
-            isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton(
-                    onPressed: () => _register(role),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Register', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                  ),
-          ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildTextField(String label, IconData icon, TextEditingController controller, {bool obscure = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: obscure,
-          decoration: InputDecoration(
-            hintText: 'Enter your $label',
-            hintStyle: TextStyle(color: Colors.grey.shade400),
-            prefixIcon: Icon(icon),
-            filled: true,
-            fillColor: AppColors.inputBg,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          ),
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      decoration: InputDecoration(
+        hintText: label,
+        hintStyle: TextStyle(color: Colors.grey.shade500),
+        filled: true,
+        fillColor: const Color(0xFFF3F4F6),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.only(left: 20, right: 12),
+          child: Icon(icon, color: Colors.grey.shade500),
         ),
-      ],
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
+        ),
+      ),
     );
   }
 }

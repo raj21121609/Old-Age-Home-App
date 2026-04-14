@@ -1,7 +1,8 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const routes = require('./routes/index');
-const db = require('./database/db'); // Require db to ensure connection and table creation
+const db = require('./database/db_postgres'); // Switched to PostgreSQL (Supabase)
 
 // Initialize Express app
 const app = express();

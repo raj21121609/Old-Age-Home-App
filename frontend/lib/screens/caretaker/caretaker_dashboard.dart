@@ -48,29 +48,20 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
 
     Widget body;
     switch (_selectedIndex) {
-      case 1: // Residents (Placeholder or List)
+      case 0: // OVERVIEW
         body = _buildDashboardHome(name, wellnessPercentage, attentionCount, provider, lang);
         break;
-      case 2: // Vitals/Alerts (Preserving old Alerts functionality here)
+      case 1: // RESIDENTS
+        body = _buildResidentsOnlyView(provider, lang);
+        break;
+      case 2: // ALERTS
         body = AlertsScreen(onBack: () => setState(() => _selectedIndex = 0));
         break;
-      case 4: // Settings (Preserving old Profile functionality here)
+      case 3: // PROFILE
         body = ProfileScreen(onBack: () => setState(() => _selectedIndex = 0));
         break;
       default:
-        // Use index 1 if a resident is actually selected for report
-        if (_selectedIndex == 1 && _selectedResident != null) {
-          body = DailyReportScreen(
-            resident: _selectedResident,
-            onBack: () => setState(() => _selectedIndex = 0),
-            onSubmit: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted securely!')));
-              setState(() => _selectedIndex = 0);
-            },
-          );
-        } else {
-          body = _buildDashboardHome(name, wellnessPercentage, attentionCount, provider, lang);
-        }
+        body = _buildDashboardHome(name, wellnessPercentage, attentionCount, provider, lang);
     }
 
     // Special case: If we are in "Report Mode" (triggered from card)
@@ -80,14 +71,14 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
         onBack: () {
           setState(() {
             _selectedResident = null;
-            _selectedIndex = 0;
+            // Stay in Residents tab
           });
         },
         onSubmit: () {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted securely!')));
           setState(() {
             _selectedResident = null;
-            _selectedIndex = 0;
+            // Stay in Residents tab
           });
         },
       );
@@ -100,17 +91,136 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
     );
   }
 
+  Widget _buildResidentsOnlyView(CaretakerProvider provider, LanguageProvider lang) {
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(top: 8),
+      children: [
+        _buildSectionHeader('All Residents'),
+        _buildResidentsSection(provider, lang),
+        const SizedBox(height: 32),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.black87, letterSpacing: -0.5)),
+    );
+  }
+
   Widget _buildDashboardHome(String name, int wellness, int attentionCount, CaretakerProvider provider, LanguageProvider lang) {
     return ListView(
       physics: const BouncingScrollPhysics(),
       children: [
         _buildTopHeader(name),
         _buildWellnessCard(wellness, attentionCount),
-        _buildCloudStatus(),
+        _buildHealthDistributionChart(provider.elderly),
         _buildQuickActions(lang),
-        _buildResidentsSection(provider, lang),
-        _buildVitalsGrid(provider, wellness),
+        _buildActivityDistribution(provider.elderly),
         const SizedBox(height: 32),
+      ],
+    );
+  }
+
+  Widget _buildHealthDistributionChart(List<dynamic> elderly) {
+    int good = elderly.where((e) => (e['health_status'] ?? 'good').toString().toLowerCase() == 'good').length;
+    int attention = elderly.where((e) => (e['health_status'] ?? 'good').toString().toLowerCase() == 'attention').length;
+    int critical = elderly.length - good - attention;
+    int total = elderly.isEmpty ? 1 : elderly.length;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('HEALTH DISTRIBUTION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 1)),
+          const SizedBox(height: 20),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Row(
+              children: [
+                if (good > 0) Expanded(flex: good, child: Container(height: 12, color: const Color(0xFF22C55E))),
+                if (attention > 0) Expanded(flex: attention, child: Container(height: 12, color: const Color(0xFFF59E0B))),
+                if (critical > 0) Expanded(flex: critical, child: Container(height: 12, color: const Color(0xFFEF4444))),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildChartLegend('Good', const Color(0xFF22C55E), good, total),
+              _buildChartLegend('Alert', const Color(0xFFF59E0B), attention, total),
+              _buildChartLegend('Critical', const Color(0xFFEF4444), critical, total),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartLegend(String label, Color color, int count, int total) {
+    return Row(
+      children: [
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        Text('$label (${((count/total)*100).toInt()}%)', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black54)),
+      ],
+    );
+  }
+
+  Widget _buildActivityDistribution(List<dynamic> elderly) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E2125),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('STAFF ENGAGEMENT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white54, letterSpacing: 1)),
+          const SizedBox(height: 20),
+          _buildActivityBar('Medication Compliance', 0.95, Colors.blueAccent),
+          const SizedBox(height: 16),
+          _buildActivityBar('Daily Report Completion', 0.78, Colors.greenAccent),
+          const SizedBox(height: 16),
+          _buildActivityBar('Physical Therapy', 0.64, Colors.orangeAccent),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityBar(String label, double progress, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+            Text('${(progress*100).toInt()}%', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w900)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.white.withOpacity(0.1),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 4,
+          ),
+        ),
       ],
     );
   }
@@ -126,14 +236,23 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
             backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=caretaker'),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Good Morning,', style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w500)),
-              Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Good Morning,', 
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w500), 
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1),
+                Text(name, 
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87), 
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1),
+              ],
+            ),
           ),
-          const Spacer(),
+          const SizedBox(width: 8),
           Stack(
             children: [
               Container(
@@ -184,33 +303,6 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
     );
   }
 
-  Widget _buildCloudStatus() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(32),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-            child: const Icon(Icons.cloud_done_rounded, color: Color(0xFF048A39), size: 24),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Cloud Sync Active', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF048A39))),
-              Text('LAST BACKUP: 2M AGO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green.shade700.withOpacity(0.5), letterSpacing: 0.5)),
-            ],
-          )
-        ],
-      ),
-    );
-  }
 
   Widget _buildQuickActions(LanguageProvider lang) {
     return Padding(
@@ -320,22 +412,26 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
               children: [
                 Text(e['name'] ?? 'Resident', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.black87)),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: const Color(0xFFE3F2FD), borderRadius: BorderRadius.circular(8)),
-                      child: Text('ROOM ${101 + index}', style: const TextStyle(color: Colors.blue, fontSize: 9, fontWeight: FontWeight.bold)),
-                    ),
-                    const SizedBox(width: 12),
-                    Icon(isStable ? Icons.access_time_rounded : Icons.warning_amber_rounded, size: 14, color: Colors.grey.shade400),
-                    const SizedBox(width: 4),
-                    Text(
-                      isStable ? 'Next Meds: 10:30 AM' : 'Needs Routine Check',
-                      style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                )
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(color: const Color(0xFFE3F2FD), borderRadius: BorderRadius.circular(8)),
+                          child: Text(e['room'] != null ? 'ROOM ${e['room']}' : 'R-${100 + index}', style: const TextStyle(color: Colors.blue, fontSize: 9, fontWeight: FontWeight.bold)),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(isStable ? Icons.check_circle_outline_rounded : Icons.pending_actions_rounded, size: 14, color: Colors.grey.shade400),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            isStable ? 'Check-up done' : 'Priority Attention',
+                            style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.w500),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                      ],
+                    )
               ],
             ),
           ),
@@ -368,98 +464,52 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
     );
   }
 
-  Widget _buildVitalsGrid(CaretakerProvider provider, int wellness) {
-    // Dynamic offsets based on wellness
-    final bpm = 72 + (100 - wellness) ~/ 5;
-    final o2 = 98 - (100 - wellness) ~/ 10;
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 1.6,
-        children: [
-          _buildVitalCard('AVERAGE BPM', '$bpm', 'bpm', Colors.green),
-          _buildVitalCard('OXYGEN SAT.', '$o2', '%', Colors.blue),
-          _buildVitalCard('HYDRATION', '84', '%', Colors.brown),
-          _buildVitalCard('MOBILITY', '6.2', 'hr', Colors.black),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVitalCard(String label, String value, String unit, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F4F8),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(label, style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-          const SizedBox(height: 4),
-          Row(
-            textBaseline: TextBaseline.alphabetic,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            children: [
-              Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.black87)),
-              const SizedBox(width: 4),
-              Text(unit, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade400)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(height: 3, width: 40, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
-        ],
-      ),
-    );
-  }
 
   Widget _buildBottomNav(LanguageProvider lang) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          )
+        ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(0, Icons.grid_view_rounded, 'OVERVIEW', _selectedIndex == 0),
-          _buildNavItem(1, Icons.people_alt_rounded, 'RESIDENTS', _selectedIndex == 1),
-          _buildNavItem(2, Icons.analytics_rounded, 'VITALS', _selectedIndex == 2),
-          _buildNavItem(3, Icons.task_alt_rounded, 'TASKS', _selectedIndex == 3),
-          _buildNavItem(4, Icons.settings_rounded, 'SETTINGS', _selectedIndex == 4),
+      child: BottomNavigationBar(
+        currentIndex: _selectedIndex > 3 ? 0 : _selectedIndex,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        selectedItemColor: const Color(0xFF048A39),
+        unselectedItemColor: const Color(0xFF94A3B8),
+        backgroundColor: Colors.white,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.2),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11, letterSpacing: 0.2),
+        items: [
+          _buildNavItem(Icons.grid_view_rounded, Icons.grid_view_outlined, 'OVERVIEW', 0),
+          _buildNavItem(Icons.people_alt_rounded, Icons.people_outline_rounded, 'RESIDENTS', 1),
+          _buildNavItem(Icons.notifications_rounded, Icons.notifications_none_rounded, 'ALERTS', 2),
+          _buildNavItem(Icons.person_rounded, Icons.person_outline_rounded, 'PROFILE', 3),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label, bool isActive) {
-    final activeColor = const Color(0xFF048A39);
-    return InkWell(
-      onTap: () => setState(() => _selectedIndex = index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: isActive ? BoxDecoration(color: activeColor, borderRadius: BorderRadius.circular(20)) : null,
-            child: Icon(icon, color: isActive ? Colors.white : Colors.grey.shade400, size: 24),
-          ),
-          if (!isActive) ...[
-            const SizedBox(height: 4),
-            Text(label, style: TextStyle(color: Colors.grey.shade400, fontSize: 9, fontWeight: FontWeight.w800)),
-          ]
-        ],
+  BottomNavigationBarItem _buildNavItem(IconData activeIcon, IconData inactiveIcon, String label, int index) {
+    bool isSelected = _selectedIndex == index;
+    return BottomNavigationBarItem(
+      icon: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF048A39).withOpacity(0.08) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(isSelected ? activeIcon : inactiveIcon, size: 22),
       ),
+      label: label,
     );
   }
 }

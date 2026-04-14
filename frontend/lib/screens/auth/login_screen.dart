@@ -55,7 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // Efficiently hook exactly onto AuthProvider's loading Boolean
     final isLoading = context.watch<AuthProvider>().isLoading;
-    final height = MediaQuery.of(context).size.height;
+    
+    // Stable height that doesn't jump during keyboard animation
+    final mediaQuery = MediaQuery.of(context);
+    final height = mediaQuery.size.height + mediaQuery.viewInsets.bottom;
 
     return Scaffold(
       backgroundColor: Colors.white,

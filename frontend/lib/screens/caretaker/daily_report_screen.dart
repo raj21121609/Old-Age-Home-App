@@ -42,23 +42,27 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
   Widget _buildCard({required String title, required String emoji, required Widget child}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 18)),
-              const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
+                child: Text(emoji, style: const TextStyle(fontSize: 16)),
+              ),
+              const SizedBox(width: 12),
+              Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.black87)),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           child,
         ],
       ),
@@ -71,14 +75,14 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
-          SizedBox(
-            height: 24, // to make the switch feel tight like the UI image
+          Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
+          Transform.scale(
+            scale: 0.8,
             child: Switch(
               value: value,
               onChanged: onChanged,
               activeColor: Colors.white,
-              activeTrackColor: Colors.black,
+              activeTrackColor: const Color(0xFF048A39),
               inactiveThumbColor: Colors.white,
               inactiveTrackColor: Colors.grey.shade300,
             ),
@@ -153,30 +157,44 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    final dateStr = '${now.day} ${months[now.month - 1]} ${now.year}';
+    final dbDate = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
     return Column(
       children: [
-        // Blue Header
+        // Premium Header
         Container(
           width: double.infinity,
-          color: const Color(0xFF1E5EFC),
-          padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 24),
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
                 onTap: widget.onBack,
-                child: Row(
-                  children: const [
-                    Icon(Icons.arrow_back, color: Colors.white, size: 16),
-                    SizedBox(width: 8),
-                    Text('Back', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                  ],
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
+                  child: const Icon(Icons.arrow_back, color: Color(0xFF1E2125), size: 18),
                 ),
               ),
               const SizedBox(height: 24),
-              Text('Report for ${widget.resident['name']}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-              const SizedBox(height: 4),
-              Text('Room ${widget.resident['room']} • 21 March 2026', style: const TextStyle(color: Colors.white, fontSize: 12)),
+              Text('Report for ${widget.resident['name']}', 
+                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E2125), letterSpacing: -0.8)),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(6)),
+                    child: Text('ROOM ${widget.resident['room'] ?? 'N/A'}', style: const TextStyle(color: Color(0xFF475569), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(dateStr, style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                ],
+              ),
             ],
           ),
         ),
@@ -308,7 +326,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                     final success = await caretaker.submitDailyReport({
                       'elderly_id': widget.resident['id'],
                       'caretaker_id': auth.user?['id'],
-                      'date': '2026-03-21', // Local date would be better but keeping consistency
+                      'date': dbDate, 
                       'breakfast': breakfast,
                       'lunch': lunch,
                       'dinner': dinner,
@@ -319,7 +337,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                       'clothes_changed': clothesChanged,
                       'mood': mood,
                       'issues': _issuesController.text,
-                      'photo_path': '', // Handle if needed
+                      'photo_path': '', 
                     });
 
                     if (success) {
@@ -331,14 +349,15 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00A843), // Exact matching green
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
+                    backgroundColor: const Color(0xFF048A39), 
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 4,
+                    shadowColor: const Color(0xFF048A39).withOpacity(0.3),
                   ),
                   child: context.watch<CaretakerProvider>().isLoading 
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Submit Report', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    : const Text('Submit Final Report', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
                 ),
                 const SizedBox(height: 24),
               ],

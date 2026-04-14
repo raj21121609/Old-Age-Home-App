@@ -20,11 +20,12 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   Widget _buildFilterPills() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -33,15 +34,15 @@ class _AlertsScreenState extends State<AlertsScreen> {
           return Expanded(
             child: GestureDetector(
               onTap: () => setState(() => selectedFilter = f),
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: isSelected ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))] : [],
+                  color: isSelected ? const Color(0xFF048A39) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: Text(f, style: TextStyle(fontSize: 13, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, color: Colors.black87)),
+                  child: Text(f, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: isSelected ? Colors.white : Colors.grey.shade600, letterSpacing: 0.5)),
                 ),
               ),
             ),
@@ -52,95 +53,88 @@ class _AlertsScreenState extends State<AlertsScreen> {
   }
 
   Widget _buildAlertCard(Map<String, dynamic> alert) {
-    Color bgColor;
-    Color borderColor;
-    IconData icon;
     Color iconColor;
+    IconData icon;
 
     switch (alert['type']) {
       case 'Emergency':
-        bgColor = Colors.red.shade50;
-        borderColor = Colors.red.shade100;
         icon = Icons.warning_amber_rounded;
-        iconColor = Colors.red;
+        iconColor = const Color(0xFFDC2626);
         break;
       case 'Warning':
-        bgColor = Colors.amber.shade50;
-        borderColor = Colors.amber.shade200;
-        icon = Icons.access_time;
-        iconColor = Colors.amber.shade700;
+        icon = Icons.access_time_rounded;
+        iconColor = const Color(0xFFD97706);
         break;
       case 'Update':
-        bgColor = Colors.blue.shade50;
-        borderColor = Colors.blue.shade100;
-        icon = Icons.shield_outlined;
-        iconColor = Colors.blue.shade700;
+        icon = Icons.info_outline_rounded;
+        iconColor = const Color(0xFF2563EB);
         break;
       case 'Success':
-        bgColor = Colors.green.shade50;
-        borderColor = Colors.green.shade200;
-        icon = Icons.check_circle_outline;
-        iconColor = Colors.green.shade600;
+        icon = Icons.check_circle_outline_rounded;
+        iconColor = const Color(0xFF16A34A);
         break;
       default:
-        bgColor = Colors.white;
-        borderColor = Colors.grey.shade300;
-        icon = Icons.info_outline;
-        iconColor = Colors.grey;
+        icon = Icons.notifications_none_rounded;
+        iconColor = Colors.grey.shade600;
     }
 
     return Container(
-      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: bgColor.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: 1.5),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.015), blurRadius: 12, offset: const Offset(0, 4))],
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: iconColor, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(alert['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
-                        if (alert['isNew'])
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E5EFC),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text('New', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                          )
-                      ],
+                    Expanded(
+                      child: Text(alert['title'], 
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF1E2125))),
                     ),
-                    const SizedBox(height: 8),
-                    Text(alert['description'], style: const TextStyle(color: Colors.black87, fontSize: 13, height: 1.4)),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, color: Colors.red.shade400, size: 14),
-                        const SizedBox(width: 6),
-                        Expanded(child: Text(alert['location'], style: TextStyle(color: Colors.grey.shade700, fontSize: 12))),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(alert['time'], style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                    if (alert['isNew'])
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text('NEW', style: TextStyle(color: Color(0xFF991B1B), fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                      )
                   ],
                 ),
-              ),
-            ],
-          )
+                const SizedBox(height: 6),
+                Text(alert['description'], style: TextStyle(color: Colors.grey.shade600, fontSize: 13, height: 1.5, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(Icons.location_on_rounded, color: Colors.grey.shade400, size: 14),
+                    const SizedBox(width: 4),
+                    Expanded(child: Text(alert['location'].toString().toUpperCase(), style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5))),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(alert['time'], style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -151,28 +145,26 @@ class _AlertsScreenState extends State<AlertsScreen> {
     final alerts = context.watch<CaretakerProvider>().alerts;
     return Column(
       children: [
-        // Blue Header
+        // Premium Header
         Container(
           width: double.infinity,
-          color: const Color(0xFF1E5EFC),
-          padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 24),
+          color: Colors.white,
+          padding: const EdgeInsets.only(top: 20, left: 24, right: 24, bottom: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
                 onTap: widget.onBack,
-                child: Row(
-                  children: const [
-                    Icon(Icons.arrow_back, color: Colors.white, size: 16),
-                    SizedBox(width: 8),
-                    Text('Back', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                  ],
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
+                  child: const Icon(Icons.arrow_back, color: Color(0xFF1E2125), size: 20),
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text('Notifications', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 16),
+              const Text('Notifications', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E2125), letterSpacing: -0.5)),
               const SizedBox(height: 4),
-              const Text('Stay updated with alerts', style: TextStyle(color: Colors.white, fontSize: 13)),
+              Text('STAY UPDATED WITH FACILITY ALERTS', style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
             ],
           ),
         ),
@@ -180,7 +172,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
         // Scrollable Body
         Expanded(
           child: Container(
-            color: const Color(0xFFF6F9FF),
+            color: const Color(0xFFF7F8FA),
             child: Column(
               children: [
                 _buildFilterPills(),
@@ -188,6 +180,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   child: alerts.isEmpty
                       ? Center(child: Text('No alerts found.', style: TextStyle(color: Colors.grey.shade600)))
                       : ListView(
+                          physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.only(top: 4, bottom: 24),
                           children: alerts.map((a) => _buildAlertCard(a)).toList(),
                         ),

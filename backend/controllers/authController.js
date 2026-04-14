@@ -1,6 +1,6 @@
-const db = require('../database/db');
+const db = require('../database/db_postgres');
 
-exports.register = (req, res) => {
+exports.register = async (req, res) => {
   const { name, email, password, role, old_age_home_id } = req.body;
 
   // Basic validation
@@ -8,46 +8,46 @@ exports.register = (req, res) => {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
-  // Insert user
-  const query = 'INSERT INTO users (name, email, password, role, old_age_home_id) VALUES (?, ?, ?, ?, ?)';
-  db.run(query, [name, email, password, role, old_age_home_id || null], function(err) {
-    if (err) {
-      if (err.message.includes('UNIQUE constraint failed')) {
-        return res.status(409).json({ error: 'Email already exists' });
-      }
-      return res.status(500).json({ error: 'Failed to register user' });
-    }
+  try {
+    // Insert user
+    const query = 'INSERT INTO users (name, email, password, role, old_age_home_id) VALUES ($1, $2, $3, $4, $5)';
+    const result = await db.run(query, [name, email, password, role, old_age_home_id || null]);
     
     return res.status(201).json({
       message: 'Registration successful',
       user: {
-        id: this.lastID,
+        id: result.lastID, // Note: In Postgres we might need RETURNING id to get lastID accurately if it's not Serial
         name,
         email,
         role,
         old_age_home_id
       }
     });
-  });
+  } catch (err) {
+    // Postgres numeric code for unique_violation is 23505
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Email already exists' });
+    }
+    console.error('Registration error:', err.message);
+    return res.status(500).json({ error: 'Failed to register user' });
+  }
 };
 
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
-  const query = `
-    SELECT u.id, u.name, u.email, u.role, u.old_age_home_id, h.name AS old_age_home_name
-    FROM users u
-    LEFT JOIN old_age_homes h ON u.old_age_home_id = h.id
-    WHERE u.email = ? AND u.password = ?
-  `;
-  db.get(query, [email, password], (err, user) => {
-    if (err) {
-      return res.status(500).json({ error: 'Database error during login' });
-    }
+  try {
+    const query = `
+      SELECT u.id, u.name, u.email, u.role, u.old_age_home_id, h.name AS old_age_home_name
+      FROM users u
+      LEFT JOIN old_age_homes h ON u.old_age_home_id = h.id
+      WHERE u.email = $1 AND u.password = $2
+    `;
+    const user = await db.get(query, [email, password]);
     
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
@@ -64,5 +64,8 @@ exports.login = (req, res) => {
         old_age_home_name: user.old_age_home_name
       }
     });
-  });
+  } catch (err) {
+    console.error('Database error during login:', err.message);
+    return res.status(500).json({ error: 'Database error during login' });
+  }
 };

@@ -20,19 +20,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildCard({required String title, required IconData icon, required Widget child}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: Colors.blue.shade700, size: 20),
-              const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, color: const Color(0xFF048A39), size: 18),
+              ),
+              const SizedBox(width: 12),
+              Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.black87)),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           child,
         ],
       ),
@@ -55,11 +63,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Column(
       children: [
-        // Blue Header
+        // Premium Header
         Container(
           width: double.infinity,
-          color: const Color(0xFF1E5EFC),
-          padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 24),
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -67,22 +75,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 alignment: Alignment.centerLeft,
                 child: GestureDetector(
                   onTap: widget.onBack,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.arrow_back, color: Colors.white, size: 16),
-                      const SizedBox(width: 8),
-                      Text(langProvider.t('Back', 'वापस'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                    ],
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 14),
+                        const SizedBox(width: 8),
+                        Text(langProvider.t('Back', 'वापस'), style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 13)),
+                      ],
+                    ),
                   ),
                 ),
               ),
+              const SizedBox(height: 24),
+              Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 44, 
+                    backgroundColor: const Color(0xFFE2E8F0), 
+                    child: Text(initial, style: const TextStyle(color: Color(0xFF048A39), fontSize: 32, fontWeight: FontWeight.w900))
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(color: Color(0xFF048A39), shape: BoxShape.circle),
+                    child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
+                  )
+                ],
+              ),
               const SizedBox(height: 16),
-              CircleAvatar(radius: 40, backgroundColor: Colors.blue.shade300, child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w500))),
-              const SizedBox(height: 12),
-              Text(name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.black87, letterSpacing: -0.5)),
               const SizedBox(height: 4),
-              Text(langProvider.t('Caretaker', 'देखभालकर्ता'), style: const TextStyle(color: Colors.white70, fontSize: 14)),
+              Text(langProvider.t('CERTIFIED CARETAKER', 'प्रमाणित देखभालकर्ता'), style: TextStyle(color: const Color(0xFF048A39), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
             ],
           ),
         ),
@@ -115,12 +141,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () => langProvider.setHindi(false),
                         child: Container(
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(border: Border.all(color: !langProvider.isHindi ? Colors.blue : Colors.grey.shade300), borderRadius: BorderRadius.circular(8), color: !langProvider.isHindi ? Colors.blue.shade50 : Colors.white),
+                          decoration: BoxDecoration(border: Border.all(color: !langProvider.isHindi ? const Color(0xFF048A39) : Colors.grey.shade300), borderRadius: BorderRadius.circular(8), color: !langProvider.isHindi ? const Color(0xFF048A39).withOpacity(0.05) : Colors.white),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('English', style: TextStyle(fontWeight: !langProvider.isHindi ? FontWeight.bold : FontWeight.normal, color: !langProvider.isHindi ? Colors.blue : Colors.black87)),
-                              if (!langProvider.isHindi) const Icon(Icons.check, color: Colors.blue, size: 18),
+                              Text('English', style: TextStyle(fontWeight: !langProvider.isHindi ? FontWeight.bold : FontWeight.normal, color: !langProvider.isHindi ? const Color(0xFF048A39) : Colors.black87)),
+                              if (!langProvider.isHindi) const Icon(Icons.check_circle_rounded, color: Color(0xFF048A39), size: 18),
                             ],
                           ),
                         ),
@@ -130,12 +156,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () => langProvider.setHindi(true),
                         child: Container(
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(border: Border.all(color: langProvider.isHindi ? Colors.blue : Colors.grey.shade300), borderRadius: BorderRadius.circular(8), color: langProvider.isHindi ? Colors.blue.shade50 : Colors.white),
+                          decoration: BoxDecoration(border: Border.all(color: langProvider.isHindi ? const Color(0xFF048A39) : Colors.grey.shade300), borderRadius: BorderRadius.circular(8), color: langProvider.isHindi ? const Color(0xFF048A39).withOpacity(0.05) : Colors.white),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('हिंदी (Hindi)', style: TextStyle(fontWeight: langProvider.isHindi ? FontWeight.bold : FontWeight.normal, color: langProvider.isHindi ? Colors.blue : Colors.black87)),
-                              if (langProvider.isHindi) const Icon(Icons.check, color: Colors.blue, size: 18),
+                              Text('हिंदी (Hindi)', style: TextStyle(fontWeight: langProvider.isHindi ? FontWeight.bold : FontWeight.normal, color: langProvider.isHindi ? const Color(0xFF048A39) : Colors.black87)),
+                              if (langProvider.isHindi) const Icon(Icons.check_circle_rounded, color: Color(0xFF048A39), size: 18),
                             ],
                           ),
                         ),
@@ -192,13 +218,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     authProvider.logout();
                     Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
                   },
-                  icon: const Icon(Icons.logout, color: Colors.white, size: 20),
-                  label: Text(tLogout, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
+                  label: Text(tLogout, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE50914), // Red matching image
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
+                    backgroundColor: const Color(0xFFEF4444), 
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 4,
+                    shadowColor: const Color(0xFFEF4444).withOpacity(0.3),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -230,13 +257,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
-          SizedBox(
-            height: 24,
+          Transform.scale(
+            scale: 0.8,
             child: Switch(
               value: value,
               onChanged: onChanged,
               activeColor: Colors.white,
-              activeTrackColor: Colors.black,
+              activeTrackColor: const Color(0xFF048A39),
             ),
           ),
         ],

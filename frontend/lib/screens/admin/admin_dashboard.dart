@@ -63,7 +63,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     String gender = 'Male';
     final TextEditingController medicalCtl = TextEditingController();
     final TextEditingController emergencyCtl = TextEditingController();
-    final TextEditingController dateCtl = TextEditingController();
+    DateTime selectedDate = DateTime.now();
 
     String errorMsg = '';
 
@@ -71,72 +71,89 @@ class _AdminDashboardState extends State<AdminDashboard> {
         context: context,
         builder: (ctx) {
           return StatefulBuilder(builder: (context, setModalState) {
+            String formattedDate = "${selectedDate.day.toString().padLeft(2, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.year}";
+
             return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              backgroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
               insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(32),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Add New Resident',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(ctx),
-                          child: const Icon(Icons.close, size: 20, color: Colors.grey),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Add Resident', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1E2125), letterSpacing: -1)),
+                            SizedBox(height: 4),
+                            Text('FACILITY ENROLLMENT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF16A34A), letterSpacing: 1.5)),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(color: Colors.grey.shade50, shape: BoxShape.circle),
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(ctx),
+                            child: const Icon(Icons.close, size: 20, color: Colors.grey),
+                          ),
                         )
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text('Enter the details of the new resident below.',
-                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-                    const SizedBox(height: 24),
-                    _buildModalLabel('Full Name'),
-                    _buildModalInput(nameCtl, 'Enter full name', hasBorder: true),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 32),
+                    
+                    _buildModalLabel('FULL NAME'),
+                    _buildModalInput(nameCtl, 'e.g., John Doe', icon: Icons.person_outline_rounded),
+                    const SizedBox(height: 20),
+
                     Row(
                       children: [
                         Expanded(
-                            child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildModalLabel('Age'),
-                            _buildModalInput(ageCtl, 'Age', hasBorder: false),
-                          ],
-                        )),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildModalLabel('AGE'),
+                              _buildModalInput(ageCtl, 'Years', icon: Icons.cake_outlined, keyboardType: TextInputType.number),
+                            ],
+                          ),
+                        ),
                         const SizedBox(width: 16),
                         Expanded(
-                            child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildModalLabel('Room Number'),
-                            _buildModalInput(roomCtl, 'Room #', hasBorder: false),
-                          ],
-                        )),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildModalLabel('ROOM'),
+                              _buildModalInput(roomCtl, 'Number', icon: Icons.meeting_room_outlined),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    _buildModalLabel('Gender'),
+                    const SizedBox(height: 20),
+
+                    _buildModalLabel('GENDER'),
                     Container(
-                      height: 48,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      height: 56,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(8),
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: gender,
                           isExpanded: true,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF16A34A)),
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF1E2125)),
                           items: ['Male', 'Female', 'Other']
                               .map((e) => DropdownMenuItem(
                                   value: e,
-                                  child: Text(e, style: const TextStyle(fontSize: 14))))
+                                  child: Text(e)))
                               .toList(),
                           onChanged: (val) {
                             if (val != null) setModalState(() => gender = val);
@@ -144,119 +161,106 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    _buildModalLabel('Medical Conditions'),
-                    _buildModalInput(medicalCtl, 'e.g., Diabetes, Hypertension', hasBorder: false),
-                    const SizedBox(height: 16),
-                    _buildModalLabel('Emergency Contact'),
-                    _buildModalInput(emergencyCtl, '+91 XXXXXXXXXX', hasBorder: false),
-                    const SizedBox(height: 16),
-                    _buildModalLabel('Admission Date'),
-                    Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: TextField(
-                        controller: dateCtl,
-                        decoration: InputDecoration(
-                          hintText: '22-03-2026',
-                          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-                          border: InputBorder.none,
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                          suffixIcon:
-                              Icon(Icons.calendar_today_outlined, size: 18, color: Colors.grey.shade400),
+                    const SizedBox(height: 20),
+
+                    _buildModalLabel('MEDICAL CONDITIONS'),
+                    _buildModalInput(medicalCtl, 'e.g., Hypertension', icon: Icons.medical_services_outlined),
+                    const SizedBox(height: 20),
+
+                    _buildModalLabel('EMERGENCY CONTACT'),
+                    _buildModalInput(emergencyCtl, '+91 XXXXXXXXXX', icon: Icons.phone_outlined),
+                    const SizedBox(height: 20),
+
+                    _buildModalLabel('ADMISSION DATE'),
+                    GestureDetector(
+                      onTap: () async {
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2101),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: const ColorScheme.light(
+                                  primary: Color(0xFF16A34A),
+                                  onPrimary: Colors.white,
+                                  onSurface: Color(0xFF1E2125),
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+                        if (picked != null && picked != selectedDate) {
+                          setModalState(() => selectedDate = picked);
+                        }
+                      },
+                      child: Container(
+                        height: 56,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(formattedDate, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF1E2125))),
+                            const Icon(Icons.calendar_today_rounded, size: 18, color: Color(0xFF16A34A)),
+                          ],
                         ),
                       ),
                     ),
+
                     if (errorMsg.isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      Text(errorMsg,
-                          style: const TextStyle(
-                              color: Colors.red, fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(errorMsg, style: const TextStyle(color: Color(0xFFDC2626), fontSize: 13, fontWeight: FontWeight.w700)),
                     ],
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.grey.shade300),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            child: const Text('Cancel',
-                                style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (nameCtl.text.isEmpty ||
-                                  ageCtl.text.isEmpty ||
-                                  roomCtl.text.isEmpty ||
-                                  medicalCtl.text.isEmpty ||
-                                  emergencyCtl.text.isEmpty ||
-                                  dateCtl.text.isEmpty) {
-                                setModalState(() {
-                                  errorMsg = 'All fields are required';
-                                });
-                                return;
-                              }
+                    const SizedBox(height: 32),
 
-                              final auth = context.read<AuthProvider>();
-                              final admin = context.read<AdminProvider>();
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (nameCtl.text.isEmpty || ageCtl.text.isEmpty || roomCtl.text.isEmpty) {
+                          setModalState(() => errorMsg = 'Required fields missing');
+                          return;
+                        }
 
-                              if (auth.user == null || auth.user!['old_age_home_id'] == null) {
-                                setModalState(() {
-                                  errorMsg = 'Old Age Home ID not found';
-                                });
-                                return;
-                              }
+                        final auth = context.read<AuthProvider>();
+                        final admin = context.read<AdminProvider>();
 
-                              final success = await admin.addResident({
-                                'name': nameCtl.text,
-                                'age': int.tryParse(ageCtl.text) ?? 60,
-                                'gender': gender,
-                                'room': roomCtl.text,
-                                'medical_conditions': medicalCtl.text,
-                                'emergency_contact': emergencyCtl.text,
-                                'admission_date': dateCtl.text,
-                                'old_age_home_id': auth.user!['old_age_home_id'],
-                              });
+                        if (auth.user == null || auth.user!['old_age_home_id'] == null) {
+                          setModalState(() => errorMsg = 'Authentication error');
+                          return;
+                        }
 
-                              if (success) {
-                                Navigator.pop(ctx);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Resident added successfully!')));
-                              } else {
-                                setModalState(() {
-                                  errorMsg = admin.error;
-                                });
-                                if (errorMsg.isEmpty) {
-                                  setModalState(() {
-                                    errorMsg = 'Failed to add resident';
-                                  });
-                                }
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF16A34A),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            child: const Text('Add Resident',
-                                style:
-                                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                      ],
-                    )
+                        final success = await admin.addResident({
+                          'name': nameCtl.text,
+                          'age': int.tryParse(ageCtl.text) ?? 60,
+                          'gender': gender,
+                          'room': roomCtl.text,
+                          'medical_conditions': medicalCtl.text,
+                          'emergency_contact': emergencyCtl.text,
+                          'admission_date': formattedDate,
+                          'old_age_home_id': auth.user!['old_age_home_id'],
+                        });
+
+                        if (success) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Resident Boarded Successfully!')));
+                        } else {
+                          setModalState(() => errorMsg = admin.error);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF16A34A),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                      ),
+                      child: const Text('Confirm Enrollment', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 0.5)),
+                    ),
                   ],
                 ),
               ),
@@ -267,27 +271,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildModalLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 8, left: 4),
       child: Text(text,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 1.2)),
     );
   }
 
-  Widget _buildModalInput(TextEditingController controller, String hint, {required bool hasBorder}) {
+  Widget _buildModalInput(TextEditingController controller, String hint, {IconData? icon, TextInputType? keyboardType}) {
     return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: hasBorder ? Colors.white : Colors.grey.shade50,
-        border: hasBorder ? Border.all(color: Colors.grey.shade400) : null,
-        borderRadius: BorderRadius.circular(8),
-      ),
+      margin: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: controller,
+        keyboardType: keyboardType,
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF1E2125)),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.w500),
+          filled: true,
+          fillColor: const Color(0xFFF8FAFC),
+          prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF16A34A), size: 20) : null,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 1.5)),
         ),
       ),
     );
@@ -318,64 +324,49 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
+          color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 20,
               offset: const Offset(0, -4),
-              blurRadius: 10,
-            ),
+            )
           ],
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex > 3 ? 0 : _selectedIndex,
           onTap: (index) => setState(() => _selectedIndex = index),
-          selectedItemColor: const Color(0xFF16A34A),
-          unselectedItemColor: Colors.grey.shade400,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color(0xFF048A39),
+          unselectedItemColor: const Color(0xFF94A3B8),
           backgroundColor: Colors.white,
+          type: BottomNavigationBarType.fixed,
           elevation: 0,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.2),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11, letterSpacing: 0.2),
           items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.dashboard_outlined),
-              activeIcon: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(color: Color(0xFF16A34A), borderRadius: BorderRadius.all(Radius.circular(12))),
-                child: const Icon(Icons.dashboard, color: Colors.white, size: 22),
-              ),
-              label: 'Overview',
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.directions_walk),
-              activeIcon: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(color: Color(0xFF16A34A), borderRadius: BorderRadius.all(Radius.circular(12))),
-                child: const Icon(Icons.directions_walk, color: Colors.white, size: 22),
-              ),
-              label: 'Residents',
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.notifications_outlined),
-              activeIcon: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(color: Color(0xFF16A34A), borderRadius: BorderRadius.all(Radius.circular(12))),
-                child: const Icon(Icons.notifications, color: Colors.white, size: 22),
-              ),
-              label: 'Alerts',
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.person_outline),
-              activeIcon: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(color: Color(0xFF16A34A), borderRadius: BorderRadius.all(Radius.circular(12))),
-                child: const Icon(Icons.person, color: Colors.white, size: 22),
-              ),
-              label: 'Profile',
-            ),
+            _buildNavItem(Icons.grid_view_rounded, Icons.grid_view_outlined, 'OVERVIEW', 0),
+            _buildNavItem(Icons.people_alt_rounded, Icons.people_outline_rounded, 'RESIDENTS', 1),
+            _buildNavItem(Icons.notifications_rounded, Icons.notifications_none_rounded, 'ALERTS', 2),
+            _buildNavItem(Icons.person_rounded, Icons.person_outline_rounded, 'PROFILE', 3),
           ],
         ),
       ),
+    );
+  }
+
+  BottomNavigationBarItem _buildNavItem(IconData activeIcon, IconData inactiveIcon, String label, int index) {
+    bool isSelected = _selectedIndex == index;
+    return BottomNavigationBarItem(
+      icon: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF048A39).withOpacity(0.08) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(isSelected ? activeIcon : inactiveIcon, size: 22),
+      ),
+      label: label,
     );
   }
 
@@ -391,21 +382,38 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: Icon(Icons.admin_panel_settings, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 12),
-          const Text(
-            'Good Morning, Admin',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF1E2125)),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Facility Admin Panel',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 0.5),
+                ),
+                Text(
+                  'Daily Overview',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF1E2125)),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-          const Spacer(),
+          const SizedBox(width: 12),
           GestureDetector(
             onTap: () => setState(() => _selectedIndex = 2),
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Icon(Icons.notifications, color: Colors.blueGrey.shade600, size: 26),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.grey.shade50, shape: BoxShape.circle),
+                  child: Icon(Icons.notifications_rounded, color: Colors.blueGrey.shade700, size: 22),
+                ),
                 if (context.watch<AdminProvider>().systemAlerts.isNotEmpty)
                   Positioned(
-                    right: 2,
-                    top: 2,
+                    right: 4,
+                    top: 4,
                     child: Container(
                       width: 8,
                       height: 8,
