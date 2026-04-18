@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/api_service.dart';
 import 'package:flutter/gestures.dart';
-
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import '../../core/supabase_storage_service.dart';
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -17,6 +19,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   List<dynamic> _homes = [];
   int? _selectedHomeId;
+  File? _avatarImage;
+  bool _isUploadingAvatar = false;
 
   @override
   void initState() {
@@ -38,6 +42,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (image != null) {
+      setState(() {
+        _avatarImage = File(image.path);
+      });
+    }
+  }
+
   void _register(String role) async {
     if (_nameController.text.isEmpty || _emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
@@ -51,13 +66,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     
+    setState(() {
+      _isUploadingAvatar = true;
+    });
+
+    String? avatarUrl;
+    if (_avatarImage != null) {
+      avatarUrl = await SupabaseStorageService.uploadAvatar(
+        _avatarImage!, 
+        DateTime.now().millisecondsSinceEpoch.toString()
+      );
+    }
+    
     final success = await authProvider.register(
       _nameController.text,
       _emailController.text,
       _passwordController.text,
       role,
       oldAgeHomeId: (role == 'caretaker' || role == 'admin') ? _selectedHomeId : null,
+      avatarUrl: avatarUrl,
     );
+    
+    setState(() {
+      _isUploadingAvatar = false;
+    });
     
     if (!mounted) return;
 
@@ -122,6 +154,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   style: TextStyle(
                     fontSize: 15,
                     color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // Avatar Picker
+                Center(
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: const Color(0xFFF3F4F6),
+                        backgroundImage: _avatarImage != null 
+                            ? FileImage(_avatarImage!)
+                            : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: _pickImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF065F26),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -201,7 +264,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
                 const SizedBox(height: 32),
                 
-                isLoading
+                isLoading || _isUploadingAvatar
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
                         onPressed: () => _register(role),

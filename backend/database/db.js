@@ -21,7 +21,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
         status TEXT DEFAULT 'active'
       )`);
 
-      // Users table (updated to include old_age_home_id)
+      // Users table (updated to include old_age_home_id and avatar_url)
       db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
@@ -30,6 +30,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
         role TEXT CHECK(role IN ('admin', 'government', 'caretaker')),
         status TEXT DEFAULT 'pending',
         old_age_home_id INTEGER,
+        avatar_url TEXT,
         FOREIGN KEY (old_age_home_id) REFERENCES old_age_homes(id)
       )`);
 
@@ -42,6 +43,13 @@ const db = new sqlite3.Database(dbPath, (err) => {
           }
         } else {
           console.log('Successfully migrated users table with old_age_home_id column.');
+        }
+      });
+
+      // Migration: Add avatar_url if it's missing (SQLite only)
+      db.run(`ALTER TABLE users ADD COLUMN avatar_url TEXT`, (err) => {
+        if (err && !err.message.includes('duplicate column name')) {
+          console.log('Note: users table already has avatar_url or encountered other issue:', err.message);
         }
       });
 

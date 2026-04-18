@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../providers/government_provider.dart';
+import '../../core/supabase_storage_service.dart';
+import '../../providers/auth_provider.dart';
 import 'old_age_home_detail_screen.dart';
 import 'government_alerts_screen.dart';
 import 'government_profile_screen.dart';
@@ -53,83 +57,127 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
     final nameCtrl = TextEditingController();
     final locationCtrl = TextEditingController();
     final districtCtrl = TextEditingController();
+    XFile? selectedImage;
 
     showDialog(
       context: context,
       builder: (ctx) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Register Home', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1E2125), letterSpacing: -1)),
-                          SizedBox(height: 4),
-                          Text('FACILITY ENROLLMENT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF048A39), letterSpacing: 1.5)),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(color: Colors.grey.shade50, shape: BoxShape.circle),
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(ctx),
-                          child: const Icon(Icons.close, size: 20, color: Colors.grey),
+        return StatefulBuilder(builder: (context, setModalState) {
+          return Dialog(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Register Home', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1E2125), letterSpacing: -1)),
+                            SizedBox(height: 4),
+                            Text('FACILITY ENROLLMENT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF048A39), letterSpacing: 1.5)),
+                          ],
                         ),
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  _buildLabel('NAME OF THE FACILITY'),
-                  _buildTextField(nameCtrl, 'e.g., Silver Oaks Home', icon: Icons.business_rounded),
-                  const SizedBox(height: 20),
-                  _buildLabel('REGION / LOCATION'),
-                  _buildTextField(locationCtrl, 'e.g., South-West Wing', icon: Icons.map_rounded),
-                  const SizedBox(height: 20),
-                  _buildLabel('CITY / DISTRICT'),
-                  _buildTextField(districtCtrl, 'e.g., Manchester', icon: Icons.location_city_rounded),
-                  const SizedBox(height: 40),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF048A39),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(color: Colors.grey.shade50, shape: BoxShape.circle),
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(ctx),
+                            child: const Icon(Icons.close, size: 20, color: Colors.grey),
+                          ),
+                        )
+                      ],
                     ),
-                    onPressed: () {
-                      if (nameCtrl.text.isNotEmpty && locationCtrl.text.isNotEmpty) {
-                        context.read<GovernmentProvider>().addHome({
-                          'name': nameCtrl.text,
-                          'location': locationCtrl.text,
-                          'district': districtCtrl.text,
-                        });
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Facility Registered Successfully!')));
-                      }
-                    },
-                    child: const Text('Add Facility Now', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 0.5)),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: Text('Cancel', style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 14)),
-                  )
-                ],
+                    const SizedBox(height: 32),
+                    _buildLabel('NAME OF THE FACILITY'),
+                    _buildTextField(nameCtrl, 'e.g., Silver Oaks Home', icon: Icons.business_rounded),
+                    const SizedBox(height: 20),
+                    _buildLabel('REGION / LOCATION'),
+                    _buildTextField(locationCtrl, 'e.g., South-West Wing', icon: Icons.map_rounded),
+                    const SizedBox(height: 20),
+                    _buildLabel('CITY / DISTRICT'),
+                    _buildTextField(districtCtrl, 'e.g., Manchester', icon: Icons.location_city_rounded),
+                    const SizedBox(height: 20),
+                    _buildLabel('FACILITY IMAGE'),
+                    GestureDetector(
+                      onTap: () async {
+                        final ImagePicker picker = ImagePicker();
+                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          setModalState(() => selectedImage = image);
+                        }
+                      },
+                      child: Container(
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: selectedImage != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.file(File(selectedImage!.path), fit: BoxFit.cover, width: double.infinity),
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_a_photo_outlined, color: Colors.grey.shade400, size: 32),
+                                  const SizedBox(height: 8),
+                                  Text('Select Facility Photo', style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF048A39),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                      onPressed: () async {
+                        if (nameCtrl.text.isNotEmpty && locationCtrl.text.isNotEmpty) {
+                          String? imageUrl;
+                          if (selectedImage != null) {
+                            imageUrl = await SupabaseStorageService.uploadFacilityImage(
+                              File(selectedImage!.path), 
+                              DateTime.now().millisecondsSinceEpoch.toString()
+                            );
+                          }
+
+                          context.read<GovernmentProvider>().addHome({
+                            'name': nameCtrl.text,
+                            'location': locationCtrl.text,
+                            'district': districtCtrl.text,
+                            'image_url': imageUrl,
+                          });
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Facility Registered Successfully!')));
+                        }
+                      },
+                      child: const Text('Add Facility Now', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 0.5)),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text('Cancel', style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 14)),
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
-        );
+          );
+        });
       },
     );
   }
@@ -141,7 +189,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
     );
   }
 
-  Widget _buildTextField(TextEditingController ctrl, String hint, {IconData? icon, TextInputType? keyboardType}) {
+  Widget _buildTextField(TextEditingController ctrl, String hint, {IconData? icon, TextInputType? keyboardType = TextInputType.text}) {
     return TextField(
       controller: ctrl,
       keyboardType: keyboardType,
@@ -163,13 +211,16 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<GovernmentProvider>();
+    final auth = context.watch<AuthProvider>();
+    final user = auth.user;
+    final userAvatarUrl = user?['avatar_url'];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       body: SafeArea(
         child: Column(
           children: [
-            if (_selectedIndex == 0) _buildTopHeader(),
+            if (_selectedIndex == 0) _buildTopHeader(user, userAvatarUrl),
             Expanded(
               child: _selectedIndex == 1 
                   ? _buildFacilitiesTab(provider)
@@ -316,10 +367,15 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
       ),
       child: Row(
         children: [
-          Container(
-            width: 48, height: 48,
-            decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.business_rounded, color: Color(0xFF048A39)),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: 48, height: 48,
+              color: Colors.grey.shade100,
+              child: h['image_url'] != null && h['image_url'].toString().isNotEmpty
+                  ? Image.network(h['image_url'], fit: BoxFit.cover)
+                  : const Icon(Icons.business_rounded, color: Color(0xFF048A39)),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -345,7 +401,8 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
     );
   }
 
-  Widget _buildTopHeader() {
+  Widget _buildTopHeader(Map<String, dynamic>? user, String? userAvatarUrl) {
+    final String name = user?['name']?.toUpperCase() ?? 'ADMIN';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       color: const Color(0xFFF7F8FA),
@@ -354,7 +411,9 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
           CircleAvatar(
             radius: 20,
             backgroundColor: Colors.orange.shade100,
-            backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=admin'),
+            backgroundImage: userAvatarUrl != null && userAvatarUrl.isNotEmpty
+                ? NetworkImage(userAvatarUrl)
+                : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -368,7 +427,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  'GOOD MORNING, ADMIN',
+                  'GOOD MORNING, $name',
                   style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green.shade700, letterSpacing: 0.5),
                   overflow: TextOverflow.ellipsis,
                 )
@@ -432,7 +491,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
       return {
         'homeId': h['id'], 'name': name, 'region': region, 'residents': residents,
         'pending': pendingReports, 'alerts': alerts, 'score': score,
-        'isOk': isOk, 'isWarning': isWarning, 'isAlert': isAlert
+        'isOk': isOk, 'isWarning': isWarning, 'isAlert': isAlert, 'image_url': h['image_url']
       };
     }).where((data) {
       if (_selectedDistrict != 'All Regions' && data['region'] != _selectedDistrict) return false;
@@ -476,7 +535,6 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
           ),
           const SizedBox(height: 16),
 
-          // Filters
           SizedBox(
             height: 36,
             child: ListView(
@@ -518,7 +576,6 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
           
           const SizedBox(height: 24),
           
-          // Metrics Cards
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
@@ -621,7 +678,6 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
           
           const SizedBox(height: 32),
           
-          // Section Title
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -645,7 +701,6 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
           
           const SizedBox(height: 16),
 
-          // Facility Cards
           if (mappedList.isEmpty)
              const Padding(padding: EdgeInsets.all(20.0), child: Text("No facilities match the criteria.", style: TextStyle(color: Colors.grey))),
           
@@ -665,10 +720,11 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
                 data['isOk'] as bool,
                 data['isWarning'] as bool,
                 data['isAlert'] as bool,
+                data['image_url'] as String?,
               );
             },
           ),
-          const SizedBox(height: 80), // Padding for bottom nav and FAB
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -696,7 +752,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
     );
   }
 
-  Widget _buildFacilityCard(BuildContext context, int homeId, String name, String region, int score, bool isOk, bool isWarning, bool isAlert) {
+  Widget _buildFacilityCard(BuildContext context, int homeId, String name, String region, int score, bool isOk, bool isWarning, bool isAlert, String? actualImageUrl) {
     String badgeText = 'MONITORING';
     Color badgeColor = Colors.blue;
     if (isOk) {
@@ -707,8 +763,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
       badgeColor = Colors.red;
     }
     
-    // Fallback images based on hash of id to keep them consistent
-    final imageUrl = 'https://picsum.photos/seed/$homeId/600/300';
+    final imageUrl = actualImageUrl ?? 'https://picsum.photos/seed/$homeId/600/300';
     
     String ratingText = _getRatingText(score);
     Color ratingColor = _getRatingColor(score);
@@ -723,6 +778,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
               homeName: name,
               homeLocation: region,
               residents: 0,
+              imageUrl: actualImageUrl,
             ),
           ),
         );

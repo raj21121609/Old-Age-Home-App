@@ -1,7 +1,7 @@
 const db = require('../database/db_postgres');
 
 exports.register = async (req, res) => {
-  const { name, email, password, role, old_age_home_id } = req.body;
+  const { name, email, password, role, old_age_home_id, avatar_url } = req.body;
 
   // Basic validation
   if (!name || !email || !password || !role) {
@@ -10,8 +10,8 @@ exports.register = async (req, res) => {
 
   try {
     // Insert user
-    const query = 'INSERT INTO users (name, email, password, role, old_age_home_id) VALUES ($1, $2, $3, $4, $5)';
-    const result = await db.run(query, [name, email, password, role, old_age_home_id || null]);
+    const query = 'INSERT INTO users (name, email, password, role, old_age_home_id, avatar_url) VALUES ($1, $2, $3, $4, $5, $6)';
+    const result = await db.run(query, [name, email, password, role, old_age_home_id || null, avatar_url || null]);
     
     return res.status(201).json({
       message: 'Registration successful',
@@ -20,7 +20,8 @@ exports.register = async (req, res) => {
         name,
         email,
         role,
-        old_age_home_id
+        old_age_home_id,
+        avatar_url
       }
     });
   } catch (err) {
@@ -42,7 +43,7 @@ exports.login = async (req, res) => {
 
   try {
     const query = `
-      SELECT u.id, u.name, u.email, u.role, u.old_age_home_id, h.name AS old_age_home_name
+      SELECT u.id, u.name, u.email, u.role, u.old_age_home_id, u.avatar_url, h.name AS old_age_home_name
       FROM users u
       LEFT JOIN old_age_homes h ON u.old_age_home_id = h.id
       WHERE u.email = $1 AND u.password = $2
@@ -61,7 +62,8 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
         old_age_home_id: user.old_age_home_id,
-        old_age_home_name: user.old_age_home_name
+        old_age_home_name: user.old_age_home_name,
+        avatar_url: user.avatar_url
       }
     });
   } catch (err) {

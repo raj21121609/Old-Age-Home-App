@@ -1,6 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/admin_provider.dart';
+import '../../core/supabase_storage_service.dart';
 
 class AdminProfileScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -33,6 +38,8 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                   children: [
                     _buildProfileAvatar(lang),
                     const SizedBox(height: 32),
+                    _buildFacilityManagement(context, lang),
+                    const SizedBox(height: 16),
                     _buildUserDetails(lang),
                     const SizedBox(height: 16),
                     _buildLanguageSelection(lang),
@@ -136,6 +143,67 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
         ],
       ),
       child: child,
+    );
+  }
+
+  Widget _buildFacilityManagement(BuildContext context, LanguageProvider lang) {
+    final auth = context.watch<AuthProvider>();
+    final admin = context.watch<AdminProvider>();
+    final homeId = auth.user?['old_age_home_id'];
+    final String? imageUrl = auth.user?['image_url']; 
+
+    return _buildCardBase(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildCardHeader(Icons.business_rounded, lang.t('Facility Management', 'सुविधा प्रबंधन')),
+          const SizedBox(height: 20),
+          Container(
+            height: 160,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: imageUrl != null && imageUrl.isNotEmpty
+                  ? Image.network(imageUrl, fit: BoxFit.cover, 
+                      errorBuilder: (c, e, s) => Icon(Icons.business, color: Colors.grey.shade300, size: 64))
+                  : Icon(Icons.business, color: Colors.grey.shade300, size: 64),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () async {
+              if (homeId == null) return;
+              final ImagePicker picker = ImagePicker();
+              final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+              if (image != null) {
+                final newUrl = await SupabaseStorageService.uploadFacilityImage(
+                  File(image.path), 
+                  homeId.toString()
+                );
+                if (newUrl != null) {
+                  final success = await admin.updateFacilityImage(homeId, newUrl);
+                  if (success) {
+                    auth.user?['image_url'] = newUrl;
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Facility Image Updated!')));
+                  }
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            child: Text(lang.t('Update Facility Photo', 'सुविधा फोटो अपडेट करें'), style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 

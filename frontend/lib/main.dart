@@ -13,8 +13,19 @@ import 'screens/auth/register_screen.dart';
 import 'screens/caretaker/caretaker_dashboard.dart';
 import 'screens/government/government_dashboard.dart';
 import 'screens/admin/admin_dashboard.dart';
+import 'core/supabase_storage_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Note: App will crash on start if URL/Key aren't updated in this file. 
+  // It's in a try-catch so it won't crash the whole app if keys aren't set yet properly.
+  try {
+    await SupabaseStorageService.initialize();
+  } catch(e) {
+    print('Supabase not initialized yet - configure your URL and Key');
+  }
+
   runApp(
     MultiProvider(
       providers: [

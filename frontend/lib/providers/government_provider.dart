@@ -54,7 +54,7 @@ class GovernmentProvider extends ChangeNotifier {
         'name': homeData['name'],
         'location': homeData['location'],
         'district': homeData['district'],
-        'residents': int.tryParse(homeData['residents'] ?? '0') ?? 0,
+        'image_url': homeData['image_url'],
       });
 
       if (response.containsKey('error')) {

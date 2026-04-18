@@ -13,7 +13,7 @@ class ApiService {
     const String prodUrl = 'https://saanjh-xl2k.onrender.com/api';
     
     // LOCAL: Set this to true to use your local backend
-    const bool useLocal = false;
+    const bool useLocal = true;
 
     if (useLocal) {
       if (kIsWeb) return 'http://localhost:5000/api';
@@ -65,7 +65,7 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> register(String name, String email, String password, String role, {int? oldAgeHomeId}) async {
+  static Future<Map<String, dynamic>> register(String name, String email, String password, String role, {int? oldAgeHomeId, String? avatarUrl}) async {
     try {
       print('Sending register request to: $baseUrl/auth/register');
       final response = await http.post(
@@ -76,7 +76,8 @@ class ApiService {
           'email': email, 
           'password': password, 
           'role': role,
-          'old_age_home_id': oldAgeHomeId
+          'old_age_home_id': oldAgeHomeId,
+          'avatar_url': avatarUrl
         }),
       ).timeout(const Duration(seconds: 10)); // Fail-fast timeout
       
@@ -241,6 +242,19 @@ class ApiService {
   static Future<Map<String, dynamic>> getResidentsByHome(int homeId) async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/admin/residents/$homeId'));
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateHomeImage(int homeId, String imageUrl) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/homes/update-image'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'homeId': homeId, 'image_url': imageUrl}),
+      );
       return _handleResponse(response);
     } catch (e) {
       return _handleError(e);

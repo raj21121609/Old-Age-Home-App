@@ -88,4 +88,27 @@ class AdminProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> updateFacilityImage(int homeId, String imageUrl) async {
+    _isLoading = true;
+    _error = '';
+    notifyListeners();
+
+    try {
+      final response = await ApiService.updateHomeImage(homeId, imageUrl);
+      _isLoading = false;
+      if (response.containsKey('error')) {
+        _error = response['error'];
+        notifyListeners();
+        return false;
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = 'Failed to update facility image';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/auth_provider.dart';
 
 class GovernmentProfileScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -19,6 +20,9 @@ class _GovernmentProfileScreenState extends State<GovernmentProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<LanguageProvider>();
+    final auth = context.watch<AuthProvider>();
+    final user = auth.user;
+    final String userEmail = user?['email'] ?? '';
 
     return Container(
       color: const Color(0xFFF7F8FA),
@@ -31,11 +35,11 @@ class _GovernmentProfileScreenState extends State<GovernmentProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               children: [
                 const SizedBox(height: 8),
-                _buildProfileBadge(lang),
+                _buildProfileBadge(lang, user),
                 const SizedBox(height: 24),
                 _buildSectionHeader('ACCOUNT SETTINGS'),
                 _buildSettingsCard([
-                  _buildSettingRow(Icons.person_outline, lang.t('User Details', 'उपयोगकर्ता विवरण'), 'rajesh.singh@gov.in'),
+                  _buildSettingRow(Icons.person_outline, lang.t('User Details', 'उपयोगकर्ता विवरण'), userEmail),
                   _buildDivider(),
                   _buildSettingRow(Icons.language_rounded, lang.t('Language', 'भाषा'), lang.isHindi ? 'हिन्दी' : 'English', hasBadge: true),
                 ]),
@@ -105,7 +109,11 @@ class _GovernmentProfileScreenState extends State<GovernmentProfileScreen> {
     );
   }
 
-  Widget _buildProfileBadge(LanguageProvider lang) {
+  Widget _buildProfileBadge(LanguageProvider lang, Map<String, dynamic>? user) {
+    final String? userAvatarUrl = user?['avatar_url'];
+    final String userName = user?['name'] ?? 'Officer';
+    final String userRole = user?['role']?.toString().toUpperCase() ?? 'GOVERNMENT OFFICIAL';
+    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -124,7 +132,9 @@ class _GovernmentProfileScreenState extends State<GovernmentProfileScreen> {
           CircleAvatar(
             radius: 32,
             backgroundColor: Colors.white.withOpacity(0.2),
-            backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=admin'),
+            backgroundImage: userAvatarUrl != null && userAvatarUrl.isNotEmpty
+                ? NetworkImage(userAvatarUrl)
+                : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -132,7 +142,7 @@ class _GovernmentProfileScreenState extends State<GovernmentProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  lang.t('Officer Rajesh Singh', 'अधिकारी राजेश सिंह'),
+                  userName,
                   style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
@@ -143,7 +153,7 @@ class _GovernmentProfileScreenState extends State<GovernmentProfileScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    lang.t('Senior Government Officer', 'वरिष्ठ सरकारी अधिकारी'),
+                    userRole,
                     style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),

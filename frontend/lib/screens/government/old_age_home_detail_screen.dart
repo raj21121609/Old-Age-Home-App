@@ -8,6 +8,7 @@ class OldAgeHomeDetailScreen extends StatefulWidget {
   final String homeName;
   final String homeLocation;
   final int residents;
+  final String? imageUrl;
   final VoidCallback? onBack;
 
   const OldAgeHomeDetailScreen({
@@ -16,6 +17,7 @@ class OldAgeHomeDetailScreen extends StatefulWidget {
     required this.homeName,
     required this.homeLocation,
     required this.residents,
+    this.imageUrl,
     this.onBack,
   });
 
@@ -50,7 +52,12 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
       body: SafeArea(
         child: Column(
           children: [
-            _buildTopHeader(context),
+            Stack(
+              children: [
+                _buildCoverImage(),
+                _buildTopHeader(context),
+              ],
+            ),
             Expanded(
               child: ListView(
                 physics: const BouncingScrollPhysics(),
@@ -70,33 +77,69 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
     );
   }
 
+  Widget _buildCoverImage() {
+    return Container(
+      height: 200,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF048A39).withOpacity(0.05),
+      ),
+      child: widget.imageUrl != null && widget.imageUrl!.isNotEmpty
+          ? Image.network(widget.imageUrl!, fit: BoxFit.cover)
+          : Container(
+              color: const Color(0xFF048A39).withOpacity(0.1),
+              child: Icon(Icons.business_rounded, size: 80, color: const Color(0xFF048A39).withOpacity(0.3)),
+            ),
+    );
+  }
+
   Widget _buildTopHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          IconButton(
-            onPressed: widget.onBack ?? () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.black87),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              onPressed: widget.onBack ?? () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.black87),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            ),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.homeId == 0 ? 'Facility Network' : 'Facility Details',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-              ),
-              Text(
-                'MONITORING ACTIVE',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green.shade700, letterSpacing: 0.5),
-              )
-            ],
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.homeId == 0 ? 'Facility Network' : 'Facility Details',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                ),
+                Text(
+                  'MONITORING ACTIVE',
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.green.shade700, letterSpacing: 0.5),
+                )
+              ],
+            ),
           ),
           const Spacer(),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert_rounded, color: Colors.black54)),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert_rounded, color: Colors.black54)),
+          ),
         ],
       ),
     );

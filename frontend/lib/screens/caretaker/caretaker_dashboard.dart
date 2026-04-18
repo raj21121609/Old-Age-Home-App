@@ -36,7 +36,8 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
-    final String name = user?['name']?.split(' ')[0] ?? 'Admin';
+    final String name = user?['name']?.split(' ')[0] ?? 'Caretaker';
+    final String? userAvatarUrl = user?['avatar_url'];
     final provider = context.watch<CaretakerProvider>();
     final lang = context.watch<LanguageProvider>();
 
@@ -49,7 +50,7 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
     Widget body;
     switch (_selectedIndex) {
       case 0: // OVERVIEW
-        body = _buildDashboardHome(name, wellnessPercentage, attentionCount, provider, lang);
+        body = _buildDashboardHome(name, userAvatarUrl, wellnessPercentage, attentionCount, provider, lang);
         break;
       case 1: // RESIDENTS
         body = _buildResidentsOnlyView(provider, lang);
@@ -61,7 +62,7 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
         body = ProfileScreen(onBack: () => setState(() => _selectedIndex = 0));
         break;
       default:
-        body = _buildDashboardHome(name, wellnessPercentage, attentionCount, provider, lang);
+        body = _buildDashboardHome(name, userAvatarUrl, wellnessPercentage, attentionCount, provider, lang);
     }
 
     // Special case: If we are in "Report Mode" (triggered from card)
@@ -110,11 +111,11 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
     );
   }
 
-  Widget _buildDashboardHome(String name, int wellness, int attentionCount, CaretakerProvider provider, LanguageProvider lang) {
+  Widget _buildDashboardHome(String name, String? userAvatarUrl, int wellness, int attentionCount, CaretakerProvider provider, LanguageProvider lang) {
     return ListView(
       physics: const BouncingScrollPhysics(),
       children: [
-        _buildTopHeader(name),
+        _buildTopHeader(name, userAvatarUrl),
         _buildWellnessCard(wellness, attentionCount),
         _buildHealthDistributionChart(provider.elderly),
         _buildQuickActions(lang),
@@ -225,7 +226,7 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
     );
   }
 
-  Widget _buildTopHeader(String name) {
+  Widget _buildTopHeader(String name, String? userAvatarUrl) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
@@ -233,7 +234,9 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
           CircleAvatar(
             radius: 20,
             backgroundColor: Colors.grey.shade200,
-            backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=caretaker'),
+            backgroundImage: userAvatarUrl != null && userAvatarUrl.isNotEmpty
+                ? NetworkImage(userAvatarUrl)
+                : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -389,8 +392,8 @@ class _CaretakerDashboardState extends State<CaretakerDashboard> {
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: Colors.grey.shade100,
-                backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=${e['id']}'),
+                backgroundColor: Colors.grey.shade200,
+                backgroundImage: const AssetImage('assets/images/default_avatar.png'),
               ),
               Positioned(
                 right: 2, bottom: 2,
