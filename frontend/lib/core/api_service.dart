@@ -6,14 +6,14 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiService {
   
-  static const String _localIp = '192.168.1.5'; 
+  static const String _localIp = '192.168.1.8'; 
 
   static String get baseUrl {
     // PRODUCTION: Your Render URL
     const String prodUrl = 'https://saanjh-xl2k.onrender.com/api';
     
     // LOCAL: Set this to true to use your local backend
-    const bool useLocal = true;
+    const bool useLocal = false;
 
     if (useLocal) {
       if (kIsWeb) return 'http://localhost:5000/api';

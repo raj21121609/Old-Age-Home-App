@@ -61,68 +61,62 @@ class _AdminAlertsScreenState extends State<AdminAlertsScreen> {
 
   Widget _buildPremiumHeader() {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      color: const Color(0xFFF7F8FA),
       child: Row(
         children: [
           if (widget.onBack != null)
-            GestureDetector(
-              onTap: widget.onBack,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                margin: const EdgeInsets.only(right: 16),
-                decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
-                child: const Icon(Icons.arrow_back, color: Color(0xFF1E2125), size: 20),
-              ),
+            IconButton(
+              onPressed: widget.onBack,
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.black87),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
             ),
+          if (widget.onBack != null) const SizedBox(width: 12),
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('System Notifications', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF1E2125), letterSpacing: -0.5)),
-              Text('CENTRAL ALERT MONITORING', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 1)),
+              Text('System Notifications', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text('CENTRAL ALERT MONITORING', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red, letterSpacing: 0.5)),
             ],
           ),
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: const Color(0xFFDCFCE7), shape: BoxShape.circle),
-            child: const Icon(Icons.security_rounded, color: Color(0xFF16A34A), size: 20),
-          ),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.tune_rounded, color: Colors.black54)),
         ],
       ),
     );
   }
 
   Widget _buildFilterRow() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Row(
-        children: _filters.map((f) => Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedFilter = f),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: _selectedFilter == f ? const Color(0xFF16A34A) : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, bottom: 16),
+      child: SizedBox(
+        height: 36,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: _filters.map((f) {
+            bool isSelected = _selectedFilter == f;
+            return GestureDetector(
+              onTap: () => setState(() => _selectedFilter = f),
+              child: Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF048A39) : Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  f,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.black87,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 13,
+                  ),
+                ),
               ),
-              child: Text(f, style: TextStyle(
-                color: _selectedFilter == f ? Colors.white : Colors.grey.shade600,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.5,
-              )),
-            ),
-          ),
-        )).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

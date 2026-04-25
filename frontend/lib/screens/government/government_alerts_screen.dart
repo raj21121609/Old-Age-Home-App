@@ -150,56 +150,67 @@ class _GovernmentAlertsScreenState extends State<GovernmentAlertsScreen> {
     required String time,
     bool isCritical = false,
   }) {
+    Color iconColor = isCritical ? const Color(0xFFDC2626) : const Color(0xFF2563EB);
+    IconData icon = isCritical ? Icons.warning_amber_rounded : Icons.info_outline_rounded;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          )
-        ],
-        border: Border.all(color: isCritical ? Colors.red.shade100 : Colors.transparent),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.015), blurRadius: 12, offset: const Offset(0, 4))],
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.black87)),
-              ),
-              Text(time, style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.w600)),
-            ],
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
           ),
-          const SizedBox(height: 8),
-          Text(description, style: TextStyle(color: Colors.blueGrey.shade700, fontSize: 13, height: 1.5)),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isCritical ? Colors.red.shade50 : Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.warning_amber_rounded, size: 14, color: isCritical ? Colors.red : Colors.blue),
-                    const SizedBox(width: 6),
-                    Text(isCritical ? 'URGENT' : 'INFO', style: TextStyle(color: isCritical ? Colors.red : Colors.blue, fontWeight: FontWeight.bold, fontSize: 10)),
+                    Expanded(
+                      child: Text(title, 
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF1E2125))),
+                    ),
+                    if (isCritical)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text('URGENT', style: TextStyle(color: Color(0xFF991B1B), fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                      )
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(subText, style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.w500)),
-            ],
-          )
+                const SizedBox(height: 6),
+                Text(description, style: TextStyle(color: Colors.grey.shade600, fontSize: 13, height: 1.5, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(Icons.location_on_rounded, color: Colors.grey.shade400, size: 14),
+                    const SizedBox(width: 4),
+                    Expanded(child: Text(subText.toUpperCase(), style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5))),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(time, style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
         ],
       ),
     );

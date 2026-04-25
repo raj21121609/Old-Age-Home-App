@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/government_provider.dart';
 import 'report_detail_screen.dart';
-
+import '../../core/widgets/facility_image.dart';
 class OldAgeHomeDetailScreen extends StatefulWidget {
   final int homeId;
   final String homeName;
   final String homeLocation;
   final int residents;
+  final int complianceScore;
   final String? imageUrl;
   final VoidCallback? onBack;
 
@@ -17,6 +18,7 @@ class OldAgeHomeDetailScreen extends StatefulWidget {
     required this.homeName,
     required this.homeLocation,
     required this.residents,
+    required this.complianceScore,
     this.imageUrl,
     this.onBack,
   });
@@ -49,70 +51,83 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Stack(
+      body: Stack(
+        children: [
+          Positioned(
+            top: 0, left: 0, right: 0,
+            height: 280,
+            child: _buildCoverImage(),
+          ),
+          SafeArea(
+            child: Column(
               children: [
-                _buildCoverImage(),
                 _buildTopHeader(context),
+                Expanded(
+                  child: ListView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(top: 130, bottom: 48),
+                    children: [
+                      _buildFacilitySummary(),
+                      const SizedBox(height: 20),
+                      _buildTabSection(),
+                      const SizedBox(height: 20),
+                      _buildReportsList(),
+                    ],
+                  ),
+                )
               ],
             ),
-            Expanded(
-              child: ListView(
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  _buildFacilitySummary(),
-                  const SizedBox(height: 16),
-                  _buildTabSection(),
-                  const SizedBox(height: 16),
-                  _buildReportsList(),
-                  const SizedBox(height: 48),
-                ],
-              ),
-            )
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildCoverImage() {
-    return Container(
-      height: 200,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF048A39).withOpacity(0.05),
-      ),
-      child: widget.imageUrl != null && widget.imageUrl!.isNotEmpty
-          ? Image.network(widget.imageUrl!, fit: BoxFit.cover)
-          : Container(
-              color: const Color(0xFF048A39).withOpacity(0.1),
-              child: Icon(Icons.business_rounded, size: 80, color: const Color(0xFF048A39).withOpacity(0.3)),
+    return Stack(
+      children: [
+        SizedBox(
+          height: 280,
+          width: double.infinity,
+          child: FacilityImage(
+            imageUrl: widget.imageUrl,
+            name: widget.homeName,
+            height: 280,
+            width: double.infinity,
+          ),
+        ),
+        Container(
+          height: 280,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withOpacity(0.5),
+                Colors.transparent,
+                const Color(0xFFF7F8FA),
+              ],
+              stops: const [0.0, 0.6, 1.0],
             ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildTopHeader(BuildContext context) {
-    return Container(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              onPressed: widget.onBack ?? () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.black87),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-            ),
+          _buildGlassIconButton(
+            icon: Icons.arrow_back_ios_new_rounded,
+            onTap: widget.onBack ?? () => Navigator.pop(context),
           ),
           const SizedBox(width: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.9),
               borderRadius: BorderRadius.circular(20),
@@ -122,25 +137,36 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  widget.homeId == 0 ? 'Facility Network' : 'Facility Details',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                  widget.homeId == 0 ? 'Facility Network' : 'Overview',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.black87),
                 ),
                 Text(
                   'MONITORING ACTIVE',
-                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.green.shade700, letterSpacing: 0.5),
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: const Color(0xFF048A39), letterSpacing: 0.5),
                 )
               ],
             ),
           ),
           const Spacer(),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert_rounded, color: Colors.black54)),
+          _buildGlassIconButton(
+            icon: Icons.more_vert_rounded,
+            onTap: () {},
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGlassIconButton({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 20, color: Colors.black87),
       ),
     );
   }
@@ -152,33 +178,57 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
             )
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.homeName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.black87)),
-            const SizedBox(height: 4),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(Icons.location_on, size: 14, color: Colors.grey.shade400),
-                const SizedBox(width: 4),
-                Text(widget.homeLocation, style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w500)),
+                Expanded(
+                  child: Text(
+                    widget.homeName,
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.black87, height: 1.2),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: const Color(0xFF048A39).withOpacity(0.1), shape: BoxShape.circle),
+                  child: const Icon(Icons.verified_rounded, color: Color(0xFF048A39), size: 20),
+                )
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             Row(
               children: [
-                _buildSmallStat('RESIDENTS', '${widget.residents}', Colors.blue),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+                  child: Icon(Icons.location_on_rounded, size: 14, color: Colors.grey.shade600),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    widget.homeLocation,
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(child: _buildSmallStat('RESIDENTS', '${widget.residents}', Icons.people_alt_rounded, Colors.blue)),
                 const SizedBox(width: 12),
-                _buildSmallStat('AVG. SCORE', '94.2%', Colors.green),
+                Expanded(child: _buildSmallStat('COMPLIANCE', '${widget.complianceScore}%', Icons.analytics_rounded, widget.complianceScore >= 75 ? const Color(0xFF048A39) : Colors.red.shade700)),
               ],
             )
           ],
@@ -187,19 +237,31 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
     );
   }
 
-  Widget _buildSmallStat(String label, String value, Color color) {
+  Widget _buildSmallStat(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(16),
+        color: color.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-          const SizedBox(height: 2),
-          Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.w900)),
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(value, style: TextStyle(color: color.withOpacity(0.9), fontSize: 22, fontWeight: FontWeight.w900)),
         ],
       ),
     );
@@ -221,12 +283,18 @@ class _OldAgeHomeDetailScreenState extends State<OldAgeHomeDetailScreen> with Si
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              )
             ],
           ),
-          labelColor: Colors.black,
-          unselectedLabelColor: Colors.grey.shade600,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          labelColor: const Color(0xFF1E2125),
+          unselectedLabelColor: Colors.grey.shade500,
+          dividerColor: Colors.transparent,
+          indicatorSize: TabBarIndicatorSize.tab,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
           tabs: const [
             Tab(text: 'Reports'),
             Tab(text: 'Alerts'),

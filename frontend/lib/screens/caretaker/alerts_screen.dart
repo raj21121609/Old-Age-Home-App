@@ -18,36 +18,36 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   // Alerts will be fetched dynamically below.
 
-  Widget _buildFilterPills() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: filters.map((f) {
-          bool isSelected = selectedFilter == f;
-          return Expanded(
-            child: GestureDetector(
+  Widget _buildFilterRow() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, bottom: 16, top: 16),
+      child: SizedBox(
+        height: 36,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: filters.map((f) {
+            bool isSelected = selectedFilter == f;
+            return GestureDetector(
               onTap: () => setState(() => selectedFilter = f),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF048A39) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
+                  color: isSelected ? const Color(0xFF048A39) : Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Center(
-                  child: Text(f, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: isSelected ? Colors.white : Colors.grey.shade600, letterSpacing: 0.5)),
+                child: Text(
+                  f,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.black87,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 13,
+                  ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -145,37 +145,14 @@ class _AlertsScreenState extends State<AlertsScreen> {
     final alerts = context.watch<CaretakerProvider>().alerts;
     return Column(
       children: [
-        // Premium Header
-        Container(
-          width: double.infinity,
-          color: Colors.white,
-          padding: const EdgeInsets.only(top: 20, left: 24, right: 24, bottom: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: widget.onBack,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
-                  child: const Icon(Icons.arrow_back, color: Color(0xFF1E2125), size: 20),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text('Notifications', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E2125), letterSpacing: -0.5)),
-              const SizedBox(height: 4),
-              Text('STAY UPDATED WITH FACILITY ALERTS', style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
-            ],
-          ),
-        ),
-
-        // Scrollable Body
+        _buildTopHeader(),
         Expanded(
           child: Container(
             color: const Color(0xFFF7F8FA),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildFilterPills(),
+                _buildFilterRow(),
                 Expanded(
                   child: alerts.isEmpty
                       ? Center(child: Text('No alerts found.', style: TextStyle(color: Colors.grey.shade600)))
@@ -190,6 +167,33 @@ class _AlertsScreenState extends State<AlertsScreen> {
           )
         )
       ],
+    );
+  }
+
+  Widget _buildTopHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      color: const Color(0xFFF7F8FA),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: widget.onBack,
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.black87),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 12),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Notifications', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text('STAY UPDATED WITH FACILITY ALERTS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red, letterSpacing: 0.5)),
+            ],
+          ),
+          const Spacer(),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.tune_rounded, color: Colors.black54)),
+        ],
+      ),
     );
   }
 }

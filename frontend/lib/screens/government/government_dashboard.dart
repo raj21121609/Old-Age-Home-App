@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import 'old_age_home_detail_screen.dart';
 import 'government_alerts_screen.dart';
 import 'government_profile_screen.dart';
+import '../../core/widgets/facility_image.dart';
 
 class GovernmentDashboard extends StatefulWidget {
   const GovernmentDashboard({super.key});
@@ -20,6 +21,8 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
   int _selectedIndex = 0;
   String _selectedDistrict = 'All Regions';
   String _selectedRating = 'Rating: All';
+  String _searchQuery = '';
+  final TextEditingController _searchCtrl = TextEditingController();
 
   Set<String> _availableRegions = {'All Regions'};
 
@@ -39,6 +42,12 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
     score -= (alerts * 15);
     score -= (pendingCount * 10);
     return score < 0 ? 0 : score;
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
   
   String _getRatingText(int score) {
@@ -223,7 +232,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
             if (_selectedIndex == 0) _buildTopHeader(user, userAvatarUrl),
             Expanded(
               child: _selectedIndex == 1 
-                  ? _buildFacilitiesTab(provider)
+                  ? _buildFacilityExplorer(provider)
                   : _selectedIndex == 2 
                       ? GovernmentAlertsScreen(onBack: () => setState(() => _selectedIndex = 0)) 
                       : _selectedIndex == 3 
@@ -295,16 +304,26 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
     );
   }
 
-  Widget _buildFacilitiesTab(GovernmentProvider provider) {
-    final TextEditingController searchCtrl = TextEditingController();
-    
+  Widget _buildFacilityExplorer(GovernmentProvider provider) {
+    List<dynamic> filteredHomes = provider.homes.where((h) {
+      final nameStr = (h['name'] ?? '').toString().toLowerCase();
+      final locStr = (h['location'] ?? '').toString().toLowerCase();
+      final matchStr = _searchQuery.toLowerCase();
+      return nameStr.contains(matchStr) || locStr.contains(matchStr);
+    }).toList();
+
     return Column(
       children: [
         _buildSimplifiedHeader('Facility Explorer', 'MANAGE NETWORK'),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           child: TextField(
-            controller: searchCtrl,
+            controller: _searchCtrl,
+            onChanged: (val) {
+              setState(() {
+                _searchQuery = val;
+              });
+            },
             decoration: InputDecoration(
               hintText: 'Search facilities...',
               prefixIcon: const Icon(Icons.search_rounded, size: 20),
@@ -318,14 +337,31 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
         Expanded(
           child: provider.isLoading 
               ? const Center(child: CircularProgressIndicator(color: Color(0xFF048A39)))
-              : provider.homes.isEmpty
+              : filteredHomes.isEmpty
                   ? const Center(child: Text('No facilities found.'))
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      itemCount: provider.homes.length,
+                      itemCount: filteredHomes.length,
                       itemBuilder: (context, index) {
-                        final h = provider.homes[index];
-                        return _buildFacilityListTile(h);
+                        final h = filteredHomes[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OldAgeHomeDetailScreen(
+                                  homeId: h['id'] ?? 0,
+                                  homeName: h['name'] ?? 'Facility',
+                                  homeLocation: h['location'] ?? 'Region',
+                                  residents: h['residents'] ?? 0,
+                                  complianceScore: _calculateComplianceScore(h),
+                                  imageUrl: h['image_url'],
+                                ),
+                              ),
+                            );
+                          },
+                          child: _buildFacilityListTile(h),
+                        );
                       },
                     ),
         ),
@@ -369,12 +405,12 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: 48, height: 48,
-              color: Colors.grey.shade100,
-              child: h['image_url'] != null && h['image_url'].toString().isNotEmpty
-                  ? Image.network(h['image_url'], fit: BoxFit.cover)
-                  : const Icon(Icons.business_rounded, color: Color(0xFF048A39)),
+            child: FacilityImage(
+              imageUrl: h['image_url'],
+              name: h['name'] ?? 'Facility',
+              height: 48,
+              width: 48,
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           const SizedBox(width: 16),
@@ -717,6 +753,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
                 data['name'].toString(),
                 data['region'].toString(),
                 data['score'] as int,
+                data['residents'] as int,
                 data['isOk'] as bool,
                 data['isWarning'] as bool,
                 data['isAlert'] as bool,
@@ -752,7 +789,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
     );
   }
 
-  Widget _buildFacilityCard(BuildContext context, int homeId, String name, String region, int score, bool isOk, bool isWarning, bool isAlert, String? actualImageUrl) {
+  Widget _buildFacilityCard(BuildContext context, int homeId, String name, String region, int score, int residents, bool isOk, bool isWarning, bool isAlert, String? actualImageUrl) {
     String badgeText = 'MONITORING';
     Color badgeColor = Colors.blue;
     if (isOk) {
@@ -762,8 +799,7 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
       badgeText = 'REVIEW REQUIRED';
       badgeColor = Colors.red;
     }
-    
-    final imageUrl = actualImageUrl ?? 'https://picsum.photos/seed/$homeId/600/300';
+
     
     String ratingText = _getRatingText(score);
     Color ratingColor = _getRatingColor(score);
@@ -777,7 +813,8 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
               homeId: homeId,
               homeName: name,
               homeLocation: region,
-              residents: 0,
+              residents: residents,
+              complianceScore: score,
               imageUrl: actualImageUrl,
             ),
           ),
@@ -801,19 +838,12 @@ class _GovernmentDashboardState extends State<GovernmentDashboard> {
           children: [
             Stack(
               children: [
-                ClipRRect(
+                FacilityImage(
+                  imageUrl: actualImageUrl,
+                  name: name,
+                  height: 140,
+                  width: double.infinity,
                   borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
-                  child: Image.network(
-                    imageUrl,
-                    height: 140,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (ctx, err, stack) => Container(
-                      height: 140, width: double.infinity,
-                      color: Colors.grey.shade300,
-                      child: const Icon(Icons.home_work_rounded, size: 40, color: Colors.grey),
-                    ),
-                  ),
                 ),
                 Positioned(
                   top: 16,
